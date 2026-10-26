@@ -1,6 +1,6 @@
-# DocPipe — project brief
+# DocPipe — project brief (v0, historical)
 
-**Status:** Frozen on Day 1. Do not reopen for debate until Day 7.
+**Status:** Superseded on 2026-10-26 by [CHARTER.md](CHARTER.md) for P1 GCP v1.0. Kept as the v0 prototype brief. Do not execute from this file.
 
 DocPipe is a document intelligence pipeline: a folder of files becomes a cited question-answering service over Postgres + pgvector, with incremental refresh and an evaluation harness. The job is the data path, not a chatbot demo.
 
