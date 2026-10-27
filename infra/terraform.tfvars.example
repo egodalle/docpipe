@@ -1,6 +1,6 @@
-project_id                   = "docpipe-p1"
+project_id                   = "your-gcp-project"
 region                       = "us-east1"
-billing_account              = "01B4D2-BE84FB-50F7E3"
+billing_account              = "XXXXXX-XXXXXX-XXXXXX"
 budget_amount_usd            = 25
 budget_email                 = "you@example.com"
 cloud_sql_activation_policy  = "NEVER"

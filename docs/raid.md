@@ -21,7 +21,7 @@
 
 | ID | Assumption | Validate by |
 | --- | --- | --- |
-| A1 | Billing account `01B4D2-BE84FB-50F7E3` can own `docpipe-p1` | **True** — billed; `$25` budget exists |
+| A1 | Billing account can own `docpipe-p1` | **True** — billed; `$25` budget exists |
 | A3 | 20–50 files can hit recall@5 ≥ 0.70 | **True** — 28/28 unique docs, 27/28 raw |
 | A4 | Local :5433 stays free for dev | True |
 | A6 | Unlimited hours this week are actually available | Daily status |
@@ -46,6 +46,6 @@
 
 | ID | Dependency | Needed | Notes |
 | --- | --- | --- | --- |
-| D1 | GCP project + billing | D1 | **Done** — `docpipe-p1` billed on `01B4D2-BE84FB-50F7E3` |
+| D1 | GCP project + billing | D1 | **Done** — `docpipe-p1` billed; `$25` budget exists |
 | D2 | Vertex AI API | D3 | **Done** — `aiplatform.googleapis.com` enabled; first embed 2026-10-26 |
 | D3 | Golden questions | D6 | **Done** — `eval/golden.json` 28 items; recall@5 1.000 |

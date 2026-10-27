@@ -5,6 +5,7 @@ Creates GCS, Cloud SQL (`db-f1-micro`, **stopped by default**), BigQuery, IAM, S
 ```bash
 gcloud config set project YOUR_PROJECT
 cp terraform.tfvars.example terraform.tfvars   # edit project_id, billing_account, budget_email, operator_ip_cidr
+# terraform.tfvars and *.tfstate stay gitignored — never commit them
 terraform init
 terraform plan
 terraform apply
