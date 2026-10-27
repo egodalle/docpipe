@@ -9,5 +9,6 @@ COPY data/licenses.csv ./data/licenses.csv
 
 RUN pip install --no-cache-dir .
 
-ENV PYTHONUNBUFFERED=1
-CMD ["docpipe", "sync"]
+ENV PYTHONUNBUFFERED=1 PORT=8080 DOCS_ROOT=/app DOCS_CONFIG=/app/config.yaml
+EXPOSE 8080
+CMD ["docpipe", "serve", "--host", "0.0.0.0", "--port", "8080"]

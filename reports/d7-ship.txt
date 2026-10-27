@@ -1,0 +1,25 @@
+D7 ship evidence — 2026-10-27
+
+Cloud SQL
+  instance: docpipe-pg
+  state: STOPPED
+  activationPolicy: NEVER
+
+Cloud Run
+  service: docpipe-api
+  uri: https://docpipe-api-gl6bq73cza-ue.a.run.app
+  image: us-east1-docker.pkg.dev/docpipe-p1/docpipe/api:v1.0.1
+  GET /      HTTP 200  {"service":"docpipe",...}  (identity token)
+  GET /health HTTP 503 {"detail":"database unavailable"}  (SQL stopped, expected)
+
+Cost
+  budget: docpipe-p1-25usd  $25  alerts 50% / 80%
+  SQL not running (no CPU hours this session)
+  Cloud Run min_instances=0 max_instances=1
+  No $10/$20 alert mail received
+  Live invoice not available from gcloud CLI; spend estimated well under $25
+    (Vertex query embeds for D6, BQ streaming inserts, Cloud SQL disk while STOPPED,
+     Artifact Registry image, Cloud Run deploy)
+
+Demo recording cut (delivery-plan cut list #4). README + curl remain.
+Local stranger path: docker compose + docpipe serve + POST /ask (D5, still true).

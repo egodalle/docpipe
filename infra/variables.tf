@@ -47,3 +47,9 @@ variable "ingest_image" {
   description = "Container image for the Cloud Run ingest job. Empty skips creating the job until you push to Artifact Registry."
   default     = ""
 }
+
+variable "api_image" {
+  type        = string
+  description = "Container image for the Cloud Run API service. Empty skips creating the service until you push to Artifact Registry."
+  default     = ""
+}

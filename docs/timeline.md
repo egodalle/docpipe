@@ -39,3 +39,5 @@ Oct 26      27      28      29      30      31     Nov 1     Nov 2
 **D5 result:** M5 met 2026-10-27 (ahead of calendar). Local `/ask` citations + refusal; `query_logs` in Postgres and BQ; Gemini `gemini-3-flash-preview` on `global`. Cloud SQL stayed **STOPPED**. Next is D6 eval.
 
 **D6 result:** M6 met 2026-10-27 (ahead of calendar). recall@5 1.000 on 28 golden questions with unique-document collapse (raw was 0.964). Dataform assertions green on BQ. Cloud SQL stayed **STOPPED**. Next is D7 ship.
+
+**D7 result:** M7 / v1.0 met 2026-10-27 (ahead of calendar). Cloud Run `docpipe-api` deployed (authenticated). `GET /` 200; `/health` 503 while SQL NEVER. Demo recording cut. Budget $25 still in place. Cloud SQL stayed **STOPPED**.

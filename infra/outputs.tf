@@ -41,3 +41,15 @@ output "artifact_registry" {
 output "ingest_job" {
   value = try(google_cloud_run_v2_job.ingest[0].name, "not-created (set ingest_image)")
 }
+
+output "api_service" {
+  value = try(google_cloud_run_v2_service.api[0].name, "not-created (set api_image)")
+}
+
+output "api_uri" {
+  value = try(google_cloud_run_v2_service.api[0].uri, "not-created (set api_image)")
+}
+
+output "database_socket_secret" {
+  value = google_secret_manager_secret.database_socket_url.name
+}

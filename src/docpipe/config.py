@@ -7,12 +7,25 @@ from pathlib import Path
 
 import yaml
 
-ROOT = Path(__file__).resolve().parents[2]
+
+def _repo_root() -> Path:
+    env = os.environ.get("DOCS_ROOT")
+    if env:
+        return Path(env)
+    here = Path(__file__).resolve()
+    src_layout = here.parents[2]
+    for candidate in (src_layout, Path.cwd(), Path("/app")):
+        if (candidate / "config.yaml").is_file():
+            return candidate
+    return src_layout
+
+
+ROOT = _repo_root()
 DATA_DIR = ROOT / "data"
 LICENSES_CSV = DATA_DIR / "licenses.csv"
 RAW_DIR = DATA_DIR / "raw"
 QUARANTINE_DIR = DATA_DIR / "quarantine"
-CONFIG_PATH = ROOT / "config.yaml"
+CONFIG_PATH = Path(os.environ.get("DOCS_CONFIG") or (ROOT / "config.yaml"))
 SQL_DIR = ROOT / "sql"
 
 DATABASE_URL = os.environ.get(

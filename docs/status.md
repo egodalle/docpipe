@@ -6,19 +6,27 @@ Living document. Newest entry at the top.
 
 | Field | Value |
 | --- | --- |
-| Phase | **D6 / M6 complete.** Next is **D7 ship** (Sun 11/02) |
+| Phase | **D7 / M7 v1.0 shipped.** |
 | Date | 2026-10-27 |
-| Ship | 2026-11-02 |
+| Ship | 2026-11-02 (ahead of calendar) |
 | Cost cap | $25 |
 | GCP project | `docpipe-p1` (number `129492415939`) ACTIVE |
 | Cloud SQL | `docpipe-pg` **STOPPED** / `NEVER` |
+| Cloud Run | `docpipe-api` `https://docpipe-api-gl6bq73cza-ue.a.run.app` (auth; `/` 200, `/health` 503 while SQL stopped) |
 | Local DB | 36 live docs, 188 chunks, 188 embeddings on `:5433` |
 | Model | embed `text-embedding-004` dim **768**; generate `gemini-3-flash-preview` (global) |
 | Index | `embeddings_hnsw` (cosine) + unique-document collapse (`pool_k=15`) |
 | Eval | recall@5 **1.000** (28/28 unique docs) vs 0.964 raw; Dataform 4/4 green |
-| API | `127.0.0.1:8080` `/ask` `/health` `/stats` |
+| API | local `:8080` and Cloud Run (SQL stopped ⇒ `/health` 503) |
 | Blocker | None |
-| Next | D7 Cloud Run service + tag v1.0. Leave SQL stopped. |
+| Next | Leave SQL stopped. Spend stays under $25. |
+
+## 2026-10-27 night — M7 v1.0 ship (ahead of calendar)
+
+- Cloud Run service `docpipe-api` at `https://docpipe-api-gl6bq73cza-ue.a.run.app` (authenticated). Image `api:v1.0.1`. `GET /` 200; `/health` 503 while SQL is NEVER.
+- Artifact Registry `docpipe` created; Unix-socket DB secret for Cloud Run. Invoker is not public.
+- Demo recording cut (plan cut list). README + local curl remain true.
+- Budget `docpipe-p1-25usd` $25 still in place. Cloud SQL **STOPPED** / **NEVER**. Tag `v1.0`. GitHub #13 closing with this commit.
 
 ## 2026-10-27 night — M6 eval + Dataform (ahead of calendar)
 
@@ -89,3 +97,4 @@ Living document. Newest entry at the top.
 | D4 | 2026-10-26 | night | **M4 done** | Hash sync; fail-the-job tests; Cloud Run job TF |
 | D5 | 2026-10-27 | night | **M5 done** | `/ask` citations + refusal; logs in BQ |
 | D6 | 2026-10-27 | night | **M6 done** | recall@5 1.000; Dataform 4/4; unique-docs adopted |
+| D7 | 2026-10-27 | night | **M7 v1.0** | Cloud Run API; SQL stopped; tag v1.0 |

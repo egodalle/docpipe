@@ -18,12 +18,13 @@ cloud_sql_activation_policy = "ALWAYS"
 
 Then set it back to `NEVER` and apply. Do not leave ALWAYS on overnight — that is how you spend the $25 cap.
 
-Cloud Run **job** `docpipe-ingest` is defined in `run.tf` but not created until `ingest_image` is set (image must exist in Artifact Registry). SQL stays **stopped** unless you are working.
+Cloud Run **job** `docpipe-ingest` and **service** `docpipe-api` are defined in `run.tf` but not created until `ingest_image` / `api_image` are set (image must exist in Artifact Registry). SQL stays **stopped** unless you are working.
 
 ```bash
-# after docker build/push
-ingest_image = "us-east1-docker.pkg.dev/docpipe-p1/docpipe/ingest:d4"
+# after docker build/push (linux/amd64)
+api_image    = "us-east1-docker.pkg.dev/docpipe-p1/docpipe/api:v1.0.1"
+ingest_image = "us-east1-docker.pkg.dev/docpipe-p1/docpipe/api:v1.0.1"  # optional; same image, command is sync
 terraform apply
 ```
 
-Do not execute the job while Cloud SQL is NEVER — the job cannot reach a stopped instance.
+Do not execute the job or expect `/health` 200 while Cloud SQL is NEVER — neither can reach a stopped instance. The API uses Secret Manager `docpipe-database-socket-url` (Cloud SQL Unix socket), not the public-IP URL.

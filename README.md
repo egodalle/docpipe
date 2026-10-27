@@ -2,7 +2,7 @@
 
 Postgres + pgvector pipeline that turns a folder of documents into a cited retrieval service.
 
-**P1 (in flight, 7-day sprint):** GCP via **Terraform**, cited `/ask`, eval numbers, **Dataform** assertions. Ship **2026-11-02**. Cost cap **$25**.
+**P1 v1.0:** GCP via **Terraform**, cited `/ask`, eval numbers, **Dataform** assertions. Cost cap **$25**. Cloud SQL stays **stopped** unless you are working.
 
 - [Project docs](docs/README.md)
 - [Charter](docs/CHARTER.md) — executing scope
@@ -86,7 +86,7 @@ curl -s localhost:8080/ask -H 'content-type: application/json' \
 pytest
 ```
 
-Each `/ask` is stored in Postgres `query_logs` and copied to BigQuery `docpipe_p1.query_logs`. Cloud Run **service** is D7.
+Each `/ask` is stored in Postgres `query_logs` and copied to BigQuery `docpipe_p1.query_logs`.
 
 ## Eval (D6)
 
@@ -105,6 +105,37 @@ Winner is the default: `eval.unique_documents: true`, `pool_k: 15` in `config.ya
 docpipe eval --compare --no-persist
 docpipe eval                 # persist winner rows to Postgres + BigQuery
 cd dataform && npx dataform run
+```
+
+## Cloud Run API (D7)
+
+Same image serves `/ask` and `docpipe sync`. Cloud SQL stays **stopped** until you flip `cloud_sql_activation_policy = "ALWAYS"`. Do not leave ALWAYS on overnight.
+
+```bash
+# linux/amd64 even on Apple silicon
+IMAGE=us-east1-docker.pkg.dev/docpipe-p1/docpipe/api:v1.0.1
+docker build --platform linux/amd64 -t "$IMAGE" .
+gcloud auth configure-docker us-east1-docker.pkg.dev --quiet
+docker push "$IMAGE"
+```
+
+Set `api_image` in `infra/terraform.tfvars` to that IMAGE, then:
+
+```bash
+cd infra
+terraform plan
+terraform apply
+```
+
+Deployed: `https://docpipe-api-gl6bq73cza-ue.a.run.app` (authenticated; not public). Scales to zero (`min_instances = 0`, `max_instances = 1`). While Cloud SQL is NEVER, `GET /` is 200 and `/health` is 503. Start SQL only for a live `/ask` demo, then set NEVER again.
+
+Local stranger path (working without Cloud SQL):
+
+```bash
+docker compose up -d
+docpipe serve
+curl -s localhost:8080/ask -H 'content-type: application/json' \
+  -d '{"question":"How does JSONB store JSON in PostgreSQL?"}'
 ```
 
 SQL primer notes: [notes/day2-sql.md](notes/day2-sql.md). Queries: [sql/practice.sql](sql/practice.sql).

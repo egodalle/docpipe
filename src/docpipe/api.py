@@ -23,7 +23,7 @@ from docpipe.embed import EmbeddingClient, VertexEmbeddingClient
 from docpipe.generate import Generator, VertexGenerator
 from docpipe.store import connect, counts
 
-app = FastAPI(title="DocPipe", version="0.1.0")
+app = FastAPI(title="DocPipe", version="1.0.0")
 
 
 class AskRequest(BaseModel):
