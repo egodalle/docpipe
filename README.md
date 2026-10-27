@@ -25,22 +25,23 @@ source .venv/bin/activate
 python --version   # expect Python 3.11.x
 ```
 
-No application dependencies yet. Ingest and embeddings arrive on later days.
+```bash
+pip install -e ".[dev]"
+```
 
-## Postgres (Day 2)
+## Local Postgres + ingest (D2)
 
-A Homebrew Postgres is already bound to `localhost:5432`, so DocPipe’s Docker instance uses **5433**. Schema `day2` holds practice tables only; the frozen RAG schema is Day 4.
+Homebrew already binds `localhost:5432`, so DocPipe’s Docker instance uses **5433**. Practice SQL lives in schema `day2`; P1 rows are `public.documents`.
 
 ```bash
-docker run --name docpipe-pg \
-  -e POSTGRES_USER=docpipe \
-  -e POSTGRES_PASSWORD=docpipe \
-  -e POSTGRES_DB=docpipe \
-  -p 5433:5432 \
-  -d postgres:16
-
-PGPASSWORD=docpipe psql -h 127.0.0.1 -p 5433 -U docpipe -d docpipe -f sql/seed.sql
-PGPASSWORD=docpipe psql -h 127.0.0.1 -p 5433 -U docpipe -d docpipe -f sql/practice.sql
+docker compose up -d
+pip install -e ".[dev]"
+docpipe fetch              # 36 licensed files → data/raw (gitignored)
+docpipe ingest             # extract, SHA-256, load documents
+docpipe upload-gcs         # copy data/raw + licenses.csv to GCS
+pytest
 ```
+
+`data/licenses.csv` is the redistributable manifest (PostgreSQL / MIT). Empty extracts go to `data/quarantine/` and fail the job if the rate is ≥ 5%. Cloud SQL stays **stopped**.
 
 SQL primer notes: [notes/day2-sql.md](notes/day2-sql.md). Queries: [sql/practice.sql](sql/practice.sql).

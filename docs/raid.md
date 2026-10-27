@@ -4,7 +4,7 @@
 | --- | --- |
 | Document | DOC-006 |
 | Status | Live |
-| Last updated | 2026-10-26 night (M1 done) |
+| Last updated | 2026-10-26 night (M2 done) |
 
 ## Risks
 
@@ -34,7 +34,8 @@
 | I2 | Homebrew Postgres occupies :5432 | 2026-09-22 | Accepted — DocPipe on :5433 |
 | I3 | Six-week GitHub issues stale after sprint change | 2026-10-26 | **Closed** — D1–D7 are #7–#13 |
 | I4 | Billing quota exceeded; `docpipe-p1` has no billing | 2026-10-26 | **Closed** — unlinked `beaming-theorem-435112-r8`; linked `docpipe-p1` |
-| I5 | D1 `infra/` + `dataform/` uncommitted on `main` | 2026-10-26 | **Closed** this commit |
+| I5 | D1 `infra/` + `dataform/` uncommitted on `main` | 2026-10-26 | **Closed** in `29ba223` |
+| I6 | D2 ingest pack (`src/`, `tests/`, `data/licenses.csv`) uncommitted | 2026-10-26 | **Closed** this commit — GitHub #8 closing |
 
 ## Dependencies
 
@@ -42,4 +43,4 @@
 | --- | --- | --- | --- |
 | D1 | GCP project + billing | D1 | **Done** — `docpipe-p1` billed on `01B4D2-BE84FB-50F7E3` |
 | D2 | Vertex AI API | D3 | Blocks embeddings |
-| D3 | Golden questions | D6 | After corpus exists |
+| D3 | Golden questions | D6 | Corpus exists (36 files); questions still D6 |

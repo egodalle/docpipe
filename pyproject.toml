@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "docpipe"
+version = "0.1.0"
+description = "Postgres + pgvector ingest and retrieval pipeline"
+requires-python = ">=3.11"
+dependencies = [
+    "pydantic>=2.6",
+    "psycopg[binary]>=3.1",
+    "beautifulsoup4>=4.12",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+
+[project.scripts]
+docpipe = "docpipe.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+addopts = "-q"

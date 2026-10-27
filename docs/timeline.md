@@ -17,7 +17,7 @@ Oct 26      27      28      29      30      31     Nov 1     Nov 2
 | Day | Date | Milestone | Exit criteria |
 | --- | --- | --- | --- |
 | D1 | Mon 10/26 – Tue 10/27 | M1 Foundations | Terraform plan clean; five tables local; Cloud SQL exists **stopped** |
-| D2 | Wed 10/28 | M2 Ingest | Corpus in GCS; hashes in `documents` |
+| D2 | Wed 10/28 (done 10/26) | M2 Ingest | Corpus in GCS; hashes in `documents` |
 | D3 | Thu 10/29 | M3 Retrieve | Embeddings + HNSW; 5 similarity queries |
 | D4 | Fri 10/30 | M4 Incremental | One-file re-chunk; pytest fail-the-job |
 | D5 | Sat 10/31 | M5 API | `/ask` citations + refusal |
@@ -26,6 +26,8 @@ Oct 26      27      28      29      30      31     Nov 1     Nov 2
 
 **Critical path:** Terraform (D1) → extract (D2) → embed (D3) → `/ask` (D5) → eval + Dataform (D6). Incremental (D4) can overlap D5 by a few hours. Eval cannot slip past D7.
 
-**Hold:** 2026-10-27 EOD — **cleared** 2026-10-26 night. Billing linked; `terraform apply` done; Cloud SQL `docpipe-pg` **STOPPED**. Do not start SQL overnight.
+**Hold:** 2026-10-27 EOD — **cleared** 2026-10-26 night. Billing linked; `terraform apply` done; Cloud SQL `docpipe-pg` **STOPPED**. Do not start SQL until D3 embed.
 
-**D1 result:** M1 met (local five tables + GCP skeleton + SQL stopped). D2 starts Wed 10/28.
+**D1 result:** M1 met (local five tables + GCP skeleton + SQL stopped).
+
+**D2 result:** M2 met 2026-10-26 (ahead of calendar). 36 licensed files in GCS; 36 live `documents` on :5433; pytest green. Next is D3 (Thu 10/29) chunk + Vertex.
