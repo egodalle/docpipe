@@ -14,9 +14,9 @@ def load_licenses(path: Path | None = None) -> list[LicenseRow]:
         rows = [LicenseRow.model_validate(row) for row in csv.DictReader(handle)]
     if not rows:
         raise ValueError(f"empty licenses file: {csv_path}")
-    names = [row.file for row in rows]
-    if len(names) != len(set(names)):
-        raise ValueError("duplicate file names in licenses.csv")
+    keys = [(row.source, row.file) for row in rows]
+    if len(keys) != len(set(keys)):
+        raise ValueError("duplicate source/file in licenses.csv")
     return rows
 
 
@@ -31,4 +31,15 @@ def licenses_by_file(path: str | None = None) -> dict[str, LicenseRow]:
 
 def license_for_uri(uri: str) -> LicenseRow | None:
     name = uri.rstrip("/").rsplit("/", 1)[-1]
+    from docpipe.corpus import peek_active_corpus
+
+    corpus = peek_active_corpus()
+    if corpus is not None:
+        for row, path in corpus.files:
+            if path.resolve().as_uri() == uri:
+                return row
+        for row, path in corpus.files:
+            if row.file == name or path.name == name:
+                return row
+        return None
     return licenses_by_file().get(name)

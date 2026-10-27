@@ -14,7 +14,7 @@ from docpipe.config import (
     SQL_DIR,
 )
 from docpipe.chunker import ChunkDraft
-from docpipe.models import ExtractResult, SearchHit, Status
+from docpipe.models import ExtractResult, SearchHit, Status, source_value
 
 
 @contextmanager
@@ -64,7 +64,7 @@ def insert_document(conn: psycopg.Connection, result: ExtractResult, status: Sta
         RETURNING id::text
         """,
         (
-            result.source.value,
+            source_value(result.source),
             result.uri,
             result.content_hash,
             status.value,
@@ -203,23 +203,34 @@ def search_chunks(
     query_embedding: Sequence[float],
     k: int = 5,
     source: str | None = None,
+    uri_prefix: str | None = None,
 ) -> list[SearchHit]:
     if k <= 0:
         raise ValueError("k must be > 0")
     vec = _vector_literal(query_embedding)
-    if source:
+    if source or uri_prefix:
+        clauses = ["d.status = 'live'"]
+        params: list[object] = [vec]
+        if source:
+            clauses.append("d.source = %s")
+            params.append(source)
+        if uri_prefix:
+            clauses.append("starts_with(d.uri, %s)")
+            params.append(uri_prefix)
+        where = " AND ".join(clauses)
+        params.extend([vec, k])
         rows = conn.execute(
-            """
+            f"""
             SELECT c.id, c.document_id, d.uri, d.source, c.ordinal, c.body,
                    (1 - (e.embedding <=> %s::vector))::double precision AS score
             FROM embeddings e
             JOIN chunks c ON c.id = e.chunk_id
             JOIN documents d ON d.id = c.document_id
-            WHERE d.status = 'live' AND d.source = %s
+            WHERE {where}
             ORDER BY e.embedding <=> %s::vector
             LIMIT %s
             """,
-            (vec, source, vec, k),
+            tuple(params),
         ).fetchall()
     else:
         rows = conn.execute(
@@ -248,6 +259,7 @@ def search_chunks_lexical(
     question: str,
     k: int = 5,
     source: str | None = None,
+    uri_prefix: str | None = None,
 ) -> list[SearchHit]:
     if k <= 0:
         raise ValueError("k must be > 0")
@@ -257,35 +269,31 @@ def search_chunks_lexical(
     empty = conn.execute("SELECT plainto_tsquery('english', %s)::text", (cleaned,)).fetchone()
     if empty is None or not str(empty[0] or "").strip():
         return []
+    clauses = [
+        "d.status = 'live'",
+        "c.body_tsv @@ plainto_tsquery('english', %s)",
+    ]
+    params: list[object] = [cleaned, cleaned]
     if source:
-        rows = conn.execute(
-            """
-            SELECT c.id, c.document_id, d.uri, d.source, c.ordinal, c.body,
-                   ts_rank_cd(c.body_tsv, plainto_tsquery('english', %s))::double precision AS score
-            FROM chunks c
-            JOIN documents d ON d.id = c.document_id
-            WHERE d.status = 'live'
-              AND d.source = %s
-              AND c.body_tsv @@ plainto_tsquery('english', %s)
-            ORDER BY score DESC, c.ordinal
-            LIMIT %s
-            """,
-            (cleaned, source, cleaned, k),
-        ).fetchall()
-    else:
-        rows = conn.execute(
-            """
-            SELECT c.id, c.document_id, d.uri, d.source, c.ordinal, c.body,
-                   ts_rank_cd(c.body_tsv, plainto_tsquery('english', %s))::double precision AS score
-            FROM chunks c
-            JOIN documents d ON d.id = c.document_id
-            WHERE d.status = 'live'
-              AND c.body_tsv @@ plainto_tsquery('english', %s)
-            ORDER BY score DESC, c.ordinal
-            LIMIT %s
-            """,
-            (cleaned, cleaned, k),
-        ).fetchall()
+        clauses.append("d.source = %s")
+        params.append(source)
+    if uri_prefix:
+        clauses.append("starts_with(d.uri, %s)")
+        params.append(uri_prefix)
+    params.append(k)
+    where = " AND ".join(clauses)
+    rows = conn.execute(
+        f"""
+        SELECT c.id, c.document_id, d.uri, d.source, c.ordinal, c.body,
+               ts_rank_cd(c.body_tsv, plainto_tsquery('english', %s))::double precision AS score
+        FROM chunks c
+        JOIN documents d ON d.id = c.document_id
+        WHERE {where}
+        ORDER BY score DESC, c.ordinal
+        LIMIT %s
+        """,
+        tuple(params),
+    ).fetchall()
     hits: list[SearchHit] = []
     for row in rows:
         hits.append(
@@ -400,16 +408,34 @@ def insert_eval_result(
     )
 
 
-def counts(conn: psycopg.Connection) -> dict[str, int]:
-    row = conn.execute(
-        """
-        SELECT
-            (SELECT count(*) FROM documents WHERE status = 'live') AS documents,
-            (SELECT count(*) FROM chunks) AS chunks,
-            (SELECT count(*) FROM embeddings) AS embeddings,
-            (SELECT count(*) FROM query_logs) AS query_logs
-        """
-    ).fetchone()
+def counts(conn: psycopg.Connection, uri_prefix: str | None = None) -> dict[str, int]:
+    if uri_prefix:
+        row = conn.execute(
+            """
+            SELECT
+                (SELECT count(*) FROM documents
+                 WHERE status = 'live' AND starts_with(uri, %s)) AS documents,
+                (SELECT count(*) FROM chunks c
+                 JOIN documents d ON d.id = c.document_id
+                 WHERE d.status = 'live' AND starts_with(d.uri, %s)) AS chunks,
+                (SELECT count(*) FROM embeddings e
+                 JOIN chunks c ON c.id = e.chunk_id
+                 JOIN documents d ON d.id = c.document_id
+                 WHERE d.status = 'live' AND starts_with(d.uri, %s)) AS embeddings,
+                (SELECT count(*) FROM query_logs) AS query_logs
+            """,
+            (uri_prefix, uri_prefix, uri_prefix),
+        ).fetchone()
+    else:
+        row = conn.execute(
+            """
+            SELECT
+                (SELECT count(*) FROM documents WHERE status = 'live') AS documents,
+                (SELECT count(*) FROM chunks) AS chunks,
+                (SELECT count(*) FROM embeddings) AS embeddings,
+                (SELECT count(*) FROM query_logs) AS query_logs
+            """
+        ).fetchone()
     assert row is not None
     return {
         "documents": int(row[0]),

@@ -16,6 +16,24 @@
           lexical RRF). Gemini is called only when a retrieved chunk scores at
           least <span data-bind="refuse">0.60</span>. Cloud SQL stays stopped.
         </p>
+        <form class="corpus" id="corpus-form" hidden>
+          <label for="corpus-path">Corpus path</label>
+          <div class="corpus-row">
+            <input
+              id="corpus-path"
+              type="text"
+              spellcheck="false"
+              autocomplete="off"
+              placeholder="/path/to/your/docs"
+            />
+            <button type="submit" id="corpus-btn">Load &amp; index</button>
+            <button type="button" id="corpus-default">Default</button>
+          </div>
+          <p class="hint" id="corpus-hint">
+            Folder of html / markdown / text, or a DocPipe data/ directory with
+            licenses.csv. Local demo only.
+          </p>
+        </form>
         <dl class="stats" id="stats" aria-live="polite">
           <div>
             <dt>API</dt>

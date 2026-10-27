@@ -66,6 +66,7 @@ def retrieve_hits(
     query_embedding: Sequence[float],
     k: int,
     source: str | None = None,
+    uri_prefix: str | None = None,
     hybrid: bool | None = None,
     unique_documents: bool | None = None,
     pool_k: int | None = None,
@@ -76,9 +77,13 @@ def retrieve_hits(
     use_unique = UNIQUE_DOCUMENTS if unique_documents is None else unique_documents
     fetch_k = pool_k if pool_k is not None else (EVAL_POOL_K if use_unique else k)
     fetch_k = max(int(fetch_k), int(k))
-    vector_hits = search_chunks(conn, query_embedding, k=fetch_k, source=source)
+    vector_hits = search_chunks(
+        conn, query_embedding, k=fetch_k, source=source, uri_prefix=uri_prefix
+    )
     if not use_hybrid:
         return pick_topk(vector_hits, k=k, unique_documents=use_unique)
-    lexical_hits = search_chunks_lexical(conn, question, k=fetch_k, source=source)
+    lexical_hits = search_chunks_lexical(
+        conn, question, k=fetch_k, source=source, uri_prefix=uri_prefix
+    )
     fused = rrf_fuse(vector_hits, lexical_hits, rrf_k=rrf_k or RRF_K)
     return pick_topk(fused, k=k, unique_documents=use_unique)

@@ -15,7 +15,7 @@ A document is eligible for ingest when all of the following hold:
 
 | Field | Rule |
 | --- | --- |
-| `source` | One of: `postgres-docs`, `pgvector` |
+| `source` | Lowercase slug. Seed corpus uses `postgres-docs` and `pgvector`. Other folders are allowed (ADR 0009). |
 | `uri` | Stable GCS URI `gs://…` or `file://` in local dev |
 | `content_hash` | SHA-256 of extracted text, hex, unique among **live** rows |
 | `ingested_at` | Set by the job (timestamptz, UTC) |

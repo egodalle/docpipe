@@ -24,6 +24,12 @@ const resultMeta = document.getElementById("result-meta");
 const answerEl = document.getElementById("answer");
 const citationsEl = document.getElementById("citations");
 const healthPill = document.getElementById("health-pill");
+const corpusForm = document.getElementById("corpus-form");
+const corpusPathEl = document.getElementById("corpus-path");
+const corpusBtn = document.getElementById("corpus-btn");
+const corpusDefault = document.getElementById("corpus-default");
+const corpusHint = document.getElementById("corpus-hint");
+let defaultCorpusPath = "";
 
 function setText(node, value) {
   node.textContent = value == null ? "" : String(value);
@@ -41,9 +47,10 @@ function renderAnswer(node, text) {
     .replace(/(^|\n)[ \t]*\* /g, "$1• ");
 }
 
-function showBanner(message) {
+function showBanner(message, ok = false) {
   banner.hidden = !message;
   setText(banner, message || "");
+  banner.classList.toggle("ok", Boolean(ok && message));
 }
 
 function basename(uri) {
@@ -55,6 +62,47 @@ function basename(uri) {
 function updateCount() {
   const max = Number(questionEl.getAttribute("maxlength") || 2000);
   setText(charCount, `${questionEl.value.length} / ${max}`);
+}
+
+function fillSources(sources) {
+  if (!sourceEl) return;
+  const current = sourceEl.value;
+  sourceEl.replaceChildren();
+  const all = document.createElement("option");
+  all.value = "";
+  all.textContent = "all";
+  sourceEl.append(all);
+  for (const source of sources || []) {
+    const option = document.createElement("option");
+    option.value = source;
+    option.textContent = source;
+    sourceEl.append(option);
+  }
+  if (current && [...sourceEl.options].some((item) => item.value === current)) {
+    sourceEl.value = current;
+  }
+}
+
+function applyCorpus(body) {
+  if (!corpusForm || !corpusPathEl) return;
+  if (body.switch_allowed === false) {
+    corpusForm.hidden = true;
+    return;
+  }
+  corpusForm.hidden = false;
+  if (body.default_path) defaultCorpusPath = body.default_path;
+  if (body.path && (!corpusPathEl.value || body.active)) {
+    corpusPathEl.value = body.path;
+  } else if (!corpusPathEl.value && body.default_path) {
+    corpusPathEl.value = body.default_path;
+  }
+  fillSources(body.sources);
+  if (corpusHint && body.files != null && body.layout) {
+    setText(
+      corpusHint,
+      `${body.files} files · ${body.layout}${body.active ? " · active" : " · default"} · html / markdown / text`,
+    );
+  }
 }
 
 function renderSamples() {
@@ -112,8 +160,16 @@ async function loadStatus() {
       setText(refuse, Number(body.refuse_min_score).toFixed(2));
     }
     if (body.k_default) kEl.value = String(body.k_default);
+    applyCorpus(body);
   } catch {
     /* stats are optional chrome */
+  }
+
+  try {
+    const corpus = await fetch("/corpus");
+    if (corpus.ok) applyCorpus(await corpus.json());
+  } catch {
+    /* keep the form hidden */
   }
 
   try {
@@ -220,6 +276,55 @@ form.addEventListener("submit", async (event) => {
     setText(askBtn, "Ask the corpus");
   }
 });
+
+async function switchCorpus(path) {
+  const target = (path || "").trim();
+  if (!target) return;
+  showBanner("");
+  corpusBtn.disabled = true;
+  corpusDefault.disabled = true;
+  setText(corpusBtn, "Indexing…");
+  try {
+    const response = await fetch("/corpus", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ path: target, sync: true }),
+    });
+    const body = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      const detail = body.detail || `Corpus switch failed (${response.status})`;
+      showBanner(typeof detail === "string" ? detail : "Corpus switch failed.");
+      return;
+    }
+    applyCorpus(body);
+    await loadStatus();
+    const sync = body.sync || {};
+    showBanner(
+      `Loaded ${body.files || 0} files from ${body.path}. inserted=${sync.inserted ?? 0} skipped=${sync.skipped ?? 0} embedded=${sync.embedded ?? 0}`,
+      true,
+    );
+  } catch {
+    showBanner("Could not reach POST /corpus. Is docpipe serve running locally?");
+  } finally {
+    corpusBtn.disabled = false;
+    corpusDefault.disabled = false;
+    setText(corpusBtn, "Load & index");
+  }
+}
+
+if (corpusForm) {
+  corpusForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+    switchCorpus(corpusPathEl.value);
+  });
+}
+if (corpusDefault) {
+  corpusDefault.addEventListener("click", () => {
+    const path = defaultCorpusPath || corpusPathEl.value;
+    corpusPathEl.value = path;
+    switchCorpus(path);
+  });
+}
 
 questionEl.addEventListener("input", updateCount);
 renderSamples();

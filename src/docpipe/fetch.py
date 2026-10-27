@@ -6,7 +6,7 @@ from pathlib import Path
 
 from docpipe.config import RAW_DIR, USER_AGENT
 from docpipe.licenses import load_licenses
-from docpipe.models import LicenseRow
+from docpipe.models import LicenseRow, source_value
 
 
 def fetch_corpus(raw_dir: Path | None = None, timeout: int = 30) -> list[Path]:
@@ -19,7 +19,7 @@ def fetch_corpus(raw_dir: Path | None = None, timeout: int = 30) -> list[Path]:
 
 
 def _download(row: LicenseRow, dest_root: Path, timeout: int) -> Path:
-    dest = dest_root / row.source.value / row.file
+    dest = dest_root / source_value(row.source) / row.file
     dest.parent.mkdir(parents=True, exist_ok=True)
     if dest.exists() and dest.stat().st_size > 0:
         return dest

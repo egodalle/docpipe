@@ -5,9 +5,10 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from docpipe.config import EMPTY_EXTRACT_FAIL, QUARANTINE_DIR, RAW_DIR
+from docpipe.corpus import Corpus, peek_active_corpus
 from docpipe.extract import extract_file
 from docpipe.licenses import load_licenses
-from docpipe.models import LicenseRow, Status
+from docpipe.models import LicenseRow, Status, source_value
 from docpipe.store import (
     connect,
     insert_document,
@@ -46,19 +47,19 @@ def ingest_corpus(
     quarantine_dir: Path | None = None,
     database_url: str | None = None,
     fail_rate: float = EMPTY_EXTRACT_FAIL,
+    corpus: Corpus | None = None,
 ) -> IngestReport:
-    raw = raw_dir or RAW_DIR
     quarantine = quarantine_dir or QUARANTINE_DIR
     quarantine.mkdir(parents=True, exist_ok=True)
-    rows = load_licenses()
+    pairs, tombstone_root = _ingest_pairs(raw_dir, corpus)
     report = IngestReport()
     seen: set[str] = set()
     with connect(database_url) as conn:
-        for row in rows:
-            uri = _ingest_one(conn, row, raw, quarantine, report)
+        for row, path in pairs:
+            uri = _ingest_one(conn, row, path, quarantine, report)
             if uri:
                 seen.add(uri)
-        _tombstone_missing(conn, seen, raw, report)
+        _tombstone_missing(conn, seen, tombstone_root, report)
     if report.processed == 0:
         raise RuntimeError("no files ingested; run `docpipe fetch` first")
     if report.empty_extract_rate >= fail_rate:
@@ -68,15 +69,31 @@ def ingest_corpus(
     return report
 
 
+def _ingest_pairs(
+    raw_dir: Path | None,
+    corpus: Corpus | None,
+) -> tuple[list[tuple[LicenseRow, Path]], Path]:
+    if corpus is not None:
+        return list(corpus.files), corpus.files_root
+    active = peek_active_corpus()
+    if raw_dir is None and active is not None:
+        return list(active.files), active.files_root
+    raw = raw_dir or RAW_DIR
+    rows = load_licenses()
+    return [
+        (row, raw / source_value(row.source) / row.file) for row in rows
+    ], raw
+
+
 def _ingest_one(
     conn,
     row: LicenseRow,
-    raw: Path,
+    path: Path,
     quarantine: Path,
     report: IngestReport,
 ) -> str | None:
-    path = raw / row.source.value / row.file
-    uri = (raw / row.source.value / row.file).resolve().as_uri()
+    uri = path.resolve().as_uri() if path.exists() else path.as_uri()
+    source = source_value(row.source)
     if not path.exists():
         existing = live_by_uri(conn, uri)
         if existing:
@@ -84,9 +101,9 @@ def _ingest_one(
             report.tombstoned += 1
             return uri
         raise FileNotFoundError(f"missing corpus file {path}; run `docpipe fetch`")
-    result = extract_file(path, row.source, uri)
+    result = extract_file(path, source, uri)
     if result.empty:
-        dest = quarantine / row.source.value / row.file
+        dest = quarantine / source / row.file
         dest.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(path, dest)
         existing = live_by_uri(conn, uri)

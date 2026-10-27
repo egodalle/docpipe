@@ -28,7 +28,12 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser("chunk", help="Split live documents with recursive_400_80")
     sub.add_parser("embed", help="Batch-embed new chunks on Vertex; skip known hashes")
     sub.add_parser("index", help="Chunk + embed + HNSW after ingest")
-    sub.add_parser("sync", help="Incremental ingest + index (insert/update/tombstone)")
+    sync_p = sub.add_parser("sync", help="Incremental ingest + index (insert/update/tombstone)")
+    sync_p.add_argument(
+        "--corpus",
+        default=None,
+        help="Directory of docs (licenses.csv+raw, nested folders, or flat html/md/txt)",
+    )
     search = sub.add_parser("search", help="k-NN search; log hits without an LLM answer")
     search.add_argument("question", nargs="?", help="Question to embed and search")
     search.add_argument("--examples", action="store_true", help="Run the five D3 queries")
@@ -80,7 +85,14 @@ def main(argv: list[str] | None = None) -> int:
         )
         return 0
     if args.cmd == "sync":
-        report = sync_corpus()
+        corpus = None
+        if args.corpus:
+            from docpipe.corpus import discover_corpus, set_active_corpus
+
+            corpus = discover_corpus(args.corpus)
+            set_active_corpus(corpus)
+            print(f"corpus path={corpus.root} layout={corpus.layout} files={len(corpus.files)}")
+        report = sync_corpus(corpus=corpus)
         print(
             "sync "
             f"inserted={report.ingest.inserted} updated={report.ingest.updated} "

@@ -59,6 +59,64 @@ h1 {
   max-width: 38rem;
 }
 
+.corpus {
+  margin: 1.25rem 0 0;
+  padding: 0.9rem 0 0;
+  border-top: 1px solid var(--rule);
+}
+
+.corpus label {
+  display: block;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 0.4rem;
+}
+
+.corpus-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.corpus-row input {
+  flex: 1 1 16rem;
+  min-width: 12rem;
+  padding: 0.5rem 0.7rem;
+  border: 1px solid var(--rule);
+  background: var(--card);
+  color: var(--ink);
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.82rem;
+}
+
+#corpus-btn,
+#corpus-default {
+  border: 1px solid var(--rule);
+  background: var(--card);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.88rem;
+  padding: 0.45rem 0.75rem;
+  cursor: pointer;
+  border-radius: 2px;
+}
+
+#corpus-btn {
+  background: var(--ink);
+  color: var(--paper);
+  border-color: var(--ink);
+}
+
+#corpus-btn:disabled,
+#corpus-default:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
 .stats {
   display: flex;
   flex-wrap: wrap;
@@ -223,6 +281,11 @@ button[type="submit"]:disabled {
   padding: 0.7rem 0.85rem;
   background: var(--rust-soft);
   color: var(--rust);
+}
+
+.banner.ok {
+  background: var(--pine-soft);
+  color: var(--pine);
 }
 
 #result {
