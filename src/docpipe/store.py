@@ -263,6 +263,24 @@ def insert_query_log(
     )
 
 
+def insert_eval_result(
+    conn: psycopg.Connection,
+    *,
+    run_id: str,
+    question_id: str,
+    recall_at_5: bool,
+    citation_hit: bool,
+    latency_ms: int,
+) -> None:
+    conn.execute(
+        """
+        INSERT INTO eval_results (run_id, question_id, recall_at_5, citation_hit, latency_ms)
+        VALUES (%s, %s, %s, %s, %s)
+        """,
+        (run_id, question_id, recall_at_5, citation_hit, latency_ms),
+    )
+
+
 def counts(conn: psycopg.Connection) -> dict[str, int]:
     row = conn.execute(
         """

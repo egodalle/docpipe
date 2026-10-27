@@ -4,7 +4,7 @@
 | --- | --- |
 | Document | DOC-006 |
 | Status | Live |
-| Last updated | 2026-10-27 night (M5 done) |
+| Last updated | 2026-10-27 night (M6 done) |
 
 ## Risks
 
@@ -15,14 +15,14 @@
 | R3 | PDF extract quality tanks recall | M | M | Prefer markdown in seed corpus | Ed | Open |
 | R6 | Scope creep | H | H | Charter §5; 7-day cut list | Ed | Open |
 | R7 | 7-day schedule slip | H | H | Cut hybrid (already); cut WIF; eval still ships | Ed | Open |
-| R8 | Dataform assertions fail with empty BQ | M | L | Seed fixtures; run Dataform after first eval load (D6) | Ed | Open |
+| R8 | Dataform assertions fail with empty BQ | M | L | Seeded `ingest_runs` + `eval_results` on D6; CLI 4/4 green | Ed | Closed |
 
 ## Assumptions
 
 | ID | Assumption | Validate by |
 | --- | --- | --- |
 | A1 | Billing account `01B4D2-BE84FB-50F7E3` can own `docpipe-p1` | **True** — billed; `$25` budget exists |
-| A3 | 20–50 files can hit recall@5 ≥ 0.70 | D6 |
+| A3 | 20–50 files can hit recall@5 ≥ 0.70 | **True** — 28/28 unique docs, 27/28 raw |
 | A4 | Local :5433 stays free for dev | True |
 | A6 | Unlimited hours this week are actually available | Daily status |
 
@@ -39,6 +39,7 @@
 | I7 | D3+D4 pack uncommitted on `main` | 2026-10-26 | **Closed** this commit — GitHub #9 and #10 closing |
 | I8 | `gemini-2.0-flash` 404 (shut down 2026-06-01) | 2026-10-27 | **Closed** — pinned `gemini-3-flash-preview` / `global` |
 | I9 | D5 API pack uncommitted on `main` | 2026-10-27 | **Closed** this commit — GitHub #11 closing |
+| I10 | D6 eval pack uncommitted on `main` | 2026-10-27 | **Closed** this commit — GitHub #12 closing |
 
 ## Dependencies
 
@@ -46,4 +47,4 @@
 | --- | --- | --- | --- |
 | D1 | GCP project + billing | D1 | **Done** — `docpipe-p1` billed on `01B4D2-BE84FB-50F7E3` |
 | D2 | Vertex AI API | D3 | **Done** — `aiplatform.googleapis.com` enabled; first embed 2026-10-26 |
-| D3 | Golden questions | D6 | Corpus exists (36 files); questions still D6 |
+| D3 | Golden questions | D6 | **Done** — `eval/golden.json` 28 items; recall@5 1.000 |

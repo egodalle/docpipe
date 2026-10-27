@@ -37,3 +37,5 @@ Oct 26      27      28      29      30      31     Nov 1     Nov 2
 **D4 result:** M4 met 2026-10-26 (ahead of calendar). Hash sync insert/update/tombstone; one-file edit reindexes only that doc; pytest 21; Cloud Run job TF gated on `ingest_image`. Next is D5 `/ask`.
 
 **D5 result:** M5 met 2026-10-27 (ahead of calendar). Local `/ask` citations + refusal; `query_logs` in Postgres and BQ; Gemini `gemini-3-flash-preview` on `global`. Cloud SQL stayed **STOPPED**. Next is D6 eval.
+
+**D6 result:** M6 met 2026-10-27 (ahead of calendar). recall@5 1.000 on 28 golden questions with unique-document collapse (raw was 0.964). Dataform assertions green on BQ. Cloud SQL stayed **STOPPED**. Next is D7 ship.

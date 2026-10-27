@@ -40,6 +40,15 @@ def main(argv: list[str] | None = None) -> int:
     serve = sub.add_parser("serve", help="Run FastAPI /ask /health /stats on localhost")
     serve.add_argument("--host", default="127.0.0.1")
     serve.add_argument("--port", type=int, default=8080)
+    ev = sub.add_parser("eval", help="Score recall@5 against eval/golden.json")
+    ev.add_argument("--unique-documents", action="store_true")
+    ev.add_argument("--raw", action="store_true", help="Force raw top-k (no unique collapse)")
+    ev.add_argument("-k", type=int, default=5)
+    ev.add_argument("--pool-k", type=int, default=None)
+    ev.add_argument("--no-persist", action="store_true")
+    ev.add_argument("--compare", action="store_true", help="Raw top-k vs unique documents")
+    ev.add_argument("--seed-ingest-run", action="store_true")
+    ev.add_argument("--run-id", default=None)
     gcs = sub.add_parser("upload-gcs", help="Copy data/raw and licenses.csv to GCS")
     gcs.add_argument("--bucket", default=GCS_BUCKET)
     args = parser.parse_args(argv)
@@ -115,6 +124,48 @@ def main(argv: list[str] | None = None) -> int:
 
         uvicorn.run("docpipe.api:app", host=args.host, port=args.port)
         return 0
+    if args.cmd == "eval":
+        from docpipe.evalrun import (
+            RECALL_BAR,
+            compare_tunes,
+            format_report,
+            run_eval,
+            seed_ingest_run_bq,
+        )
+
+        if args.seed_ingest_run:
+            ingest_id = seed_ingest_run_bq()
+            print(f"seeded ingest_runs run_id={ingest_id}")
+        if args.compare:
+            baseline, unique, winner = compare_tunes(
+                k=args.k,
+                persist_winner=not args.no_persist,
+            )
+            print(format_report(baseline))
+            print(format_report(unique))
+            print(
+                f"winner unique_documents={winner.unique_documents} "
+                f"recall@5={winner.recall_at_5:.3f} run_id={winner.run_id}"
+            )
+            return 0 if winner.meets_bar else 2
+        if args.unique_documents and args.raw:
+            parser.error("use only one of --unique-documents / --raw")
+        unique_flag: bool | None
+        if args.unique_documents:
+            unique_flag = True
+        elif args.raw:
+            unique_flag = False
+        else:
+            unique_flag = None
+        report = run_eval(
+            unique_documents=unique_flag,
+            k=args.k,
+            pool_k=args.pool_k,
+            persist=not args.no_persist,
+            run_id=args.run_id,
+        )
+        print(format_report(report))
+        return 0 if report.recall_at_5 >= RECALL_BAR else 2
     if args.cmd == "upload-gcs":
         _upload_gcs(args.bucket)
         return 0

@@ -88,4 +88,23 @@ pytest
 
 Each `/ask` is stored in Postgres `query_logs` and copied to BigQuery `docpipe_p1.query_logs`. Cloud Run **service** is D7.
 
+## Eval (D6)
+
+28 golden questions in [`eval/golden.json`](eval/golden.json). Hit if the expected file basename is in the top 5. Bar: **recall@5 ≥ 0.70**.
+
+One-variable tune — unique-document collapse vs raw top-5 chunks:
+
+| Mode | recall@5 |
+| --- | --- |
+| Raw top-5 chunks | 0.964 (27/28) |
+| Unique documents (winner) | **1.000 (28/28)** |
+
+Winner is the default: `eval.unique_documents: true`, `pool_k: 15` in `config.yaml`. `/ask` uses the same collapse. Baseline: [`eval/baseline.md`](eval/baseline.md).
+
+```bash
+docpipe eval --compare --no-persist
+docpipe eval                 # persist winner rows to Postgres + BigQuery
+cd dataform && npx dataform run
+```
+
 SQL primer notes: [notes/day2-sql.md](notes/day2-sql.md). Queries: [sql/practice.sql](sql/practice.sql).

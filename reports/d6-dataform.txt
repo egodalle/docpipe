@@ -1,0 +1,18 @@
+Compiling...
+
+Compiled successfully.
+
+Running...
+
+Assertion passed:  docpipe_p1_assertions.cited_or_refused 
+ 	 jobId: dataform-17d8b7fc-4bf7-4669-8aa9-2987f26182d3, dataform-82ed29d5-affc-4688-92f5-ff980a949cd3,
+ 	 Bytes billed: 0 B, 10.00 MiB
+Assertion passed:  docpipe_p1_assertions.empty_extract_rate 
+ 	 jobId: dataform-924c5458-8577-42f1-a6a5-e1d0a6abe8a6, dataform-18246fd5-2ff8-425f-a96e-6e2c7d4e9c0b,
+ 	 Bytes billed: 0 B, 10.00 MiB
+Assertion passed:  docpipe_p1_assertions.incremental_noop 
+ 	 jobId: dataform-630fa7f8-f742-465b-b2f7-74a335e23815, dataform-6838fd67-4da0-44ef-bfe7-6817171f6751,
+ 	 Bytes billed: 0 B, 10.00 MiB
+Assertion passed:  docpipe_p1_assertions.recall_at_5 
+ 	 jobId: dataform-75a4730c-4e2e-4a0d-8979-73b70bdbc4d5, dataform-d5ded456-15e7-4ab9-bdc2-1e08d68dde01,
+ 	 Bytes billed: 0 B, 10.00 MiB

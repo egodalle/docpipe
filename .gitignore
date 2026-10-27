@@ -35,6 +35,7 @@ infra/tfplan
 
 # Dataform
 dataform/node_modules/
+dataform/.df-credentials.json
 
 # OS / editor
 .DS_Store

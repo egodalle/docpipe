@@ -6,14 +6,17 @@ from dataclasses import dataclass, field
 
 from docpipe.bqlog import BqSink, default_bq_sink, query_log_row
 from docpipe.config import (
+    EVAL_POOL_K,
     GENERATION_MODEL,
     K_DEFAULT,
     K_MAX,
     QUESTION_MAX_CHARS,
     REFUSE_MIN_SCORE,
+    UNIQUE_DOCUMENTS,
 )
 from docpipe.embed import EmbeddingClient, VertexEmbeddingClient
 from docpipe.generate import Generator, VertexGenerator
+from docpipe.evalrun import pick_topk
 from docpipe.models import SearchHit, Source
 from docpipe.store import connect, insert_query_log, search_chunks
 
@@ -105,7 +108,12 @@ def ask(
     started = time.perf_counter()
     vector = embedder.embed_query(cleaned)
     with connect(database_url) as conn:
-        hits = search_chunks(conn, vector, k=use_k, source=use_source)
+        fetch_k = max(use_k, EVAL_POOL_K if UNIQUE_DOCUMENTS else use_k)
+        hits = pick_topk(
+            search_chunks(conn, vector, k=fetch_k, source=use_source),
+            k=use_k,
+            unique_documents=UNIQUE_DOCUMENTS,
+        )
         top = hits[0].score if hits else 0.0
         refused = (not hits) or top < REFUSE_MIN_SCORE
         answer: str | None = None

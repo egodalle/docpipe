@@ -4,13 +4,16 @@ These assertions run **against BigQuery**, not against Postgres. pytest still te
 
 ```bash
 cd dataform
-# set defaultDatabase in dataform.json to your GCP project ID
-npx @dataform/cli install
-npx @dataform/cli compile
-npx @dataform/cli run
+npm install
+# ADC credentials, gitignored. Create dataform/.df-credentials.json:
+# { "projectId": "docpipe-p1", "location": "us-east1" }
+npx dataform compile
+npx dataform run
 ```
 
-Assertions fail until D4–D6 have shipped `ingest_runs`, `query_logs`, and `eval_results` into `docpipe_p1`. That is expected on D1.
+Use the local `@dataform/cli` from `package.json` (3.0.71). `npx @dataform/cli@3.0.23` fails on Node 25 (missing `uuid`).
+
+D6 seeded `ingest_runs` and wrote `eval_results` from `docpipe eval`. `query_logs` came from D5 `/ask`.
 
 | Assertion | Gate |
 | --- | --- |

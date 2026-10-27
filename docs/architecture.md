@@ -66,9 +66,9 @@ DocPipe turns a GCS prefix of public technical docs into a cited question-answer
 
 **Eval**
 
-- `eval/golden.json` (20–30 items: question, expected document URIs).
-- Harness scores recall@5 and citation hit rate.
-- Baseline committed in `eval/baseline.md`. One-variable tune in week 6; winner becomes default config.
+- `eval/golden.json` (28 items: question, expected document URIs).
+- Harness scores recall@5 (`docpipe eval`). Unique-document collapse is the default (`eval.unique_documents`, `pool_k=15`).
+- Baseline in `eval/baseline.md`: raw 0.964, unique **1.000**. Winner is default config and `/ask`.
 
 ## 4. IAM (least privilege)
 

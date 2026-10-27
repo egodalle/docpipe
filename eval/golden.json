@@ -1,0 +1,147 @@
+{
+  "version": 1,
+  "metric": "recall@5",
+  "notes": "expected_uris are file basenames. A hit is that basename in any of the top-5 retrieved URIs. MVCC is included as a known-thin extract.",
+  "items": [
+    {
+      "id": "jsonb-storage",
+      "question": "How does JSONB store JSON in PostgreSQL?",
+      "expected_uris": ["datatype-json.html"]
+    },
+    {
+      "id": "hnsw",
+      "question": "What is an HNSW index in pgvector?",
+      "expected_uris": ["README.md"]
+    },
+    {
+      "id": "wal",
+      "question": "What is write-ahead logging (WAL) in PostgreSQL?",
+      "expected_uris": ["wal.html"]
+    },
+    {
+      "id": "create-index",
+      "question": "How do I create an index in PostgreSQL?",
+      "expected_uris": ["sql-createindex.html"]
+    },
+    {
+      "id": "gin",
+      "question": "What is a GIN index in PostgreSQL?",
+      "expected_uris": ["gin.html"]
+    },
+    {
+      "id": "gist",
+      "question": "What is a GiST index in PostgreSQL?",
+      "expected_uris": ["gist.html"]
+    },
+    {
+      "id": "uuid",
+      "question": "How does PostgreSQL store UUID values?",
+      "expected_uris": ["datatype-uuid.html"]
+    },
+    {
+      "id": "select-sql",
+      "question": "What is the SQL SELECT statement in PostgreSQL?",
+      "expected_uris": ["sql-select.html"]
+    },
+    {
+      "id": "insert-sql",
+      "question": "How does INSERT add rows in PostgreSQL?",
+      "expected_uris": ["sql-insert.html"]
+    },
+    {
+      "id": "create-table",
+      "question": "How do I create a table in PostgreSQL?",
+      "expected_uris": ["sql-createtable.html"]
+    },
+    {
+      "id": "joins",
+      "question": "How do joins between tables work in the PostgreSQL tutorial?",
+      "expected_uris": ["tutorial-join.html"]
+    },
+    {
+      "id": "window",
+      "question": "What are window functions in the PostgreSQL tutorial?",
+      "expected_uris": ["tutorial-window.html"]
+    },
+    {
+      "id": "agg",
+      "question": "How do aggregate functions work in the PostgreSQL tutorial?",
+      "expected_uris": ["tutorial-agg.html"]
+    },
+    {
+      "id": "fts",
+      "question": "What is full text search in PostgreSQL?",
+      "expected_uris": ["textsearch-intro.html"]
+    },
+    {
+      "id": "json-functions",
+      "question": "What JSON functions and operators does PostgreSQL provide?",
+      "expected_uris": ["functions-json.html"]
+    },
+    {
+      "id": "char-types",
+      "question": "What character data types does PostgreSQL support?",
+      "expected_uris": ["datatype-character.html"]
+    },
+    {
+      "id": "numeric",
+      "question": "What numeric data types does PostgreSQL provide?",
+      "expected_uris": ["datatype-numeric.html"]
+    },
+    {
+      "id": "indexes-intro",
+      "question": "Why use indexes in PostgreSQL?",
+      "expected_uris": ["indexes-intro.html"]
+    },
+    {
+      "id": "index-types",
+      "question": "What index types does PostgreSQL offer?",
+      "expected_uris": ["indexes-types.html"]
+    },
+    {
+      "id": "backup",
+      "question": "How do I back up a PostgreSQL database?",
+      "expected_uris": ["backup.html"]
+    },
+    {
+      "id": "whatis",
+      "question": "What is PostgreSQL?",
+      "expected_uris": ["intro-whatis.html"]
+    },
+    {
+      "id": "pgvector-python",
+      "question": "How do I use pgvector from Python?",
+      "expected_uris": ["pgvector-python-README.md"]
+    },
+    {
+      "id": "ddl",
+      "question": "What is DDL in PostgreSQL?",
+      "expected_uris": ["ddl.html"]
+    },
+    {
+      "id": "string-functions",
+      "question": "What string functions does PostgreSQL provide?",
+      "expected_uris": ["functions-string.html"]
+    },
+    {
+      "id": "tutorial-select",
+      "question": "How do I query a table in the PostgreSQL tutorial?",
+      "expected_uris": ["tutorial-select.html"]
+    },
+    {
+      "id": "cosine-pgvector",
+      "question": "How does pgvector compute cosine distance?",
+      "expected_uris": ["README.md"]
+    },
+    {
+      "id": "ivfflat",
+      "question": "What is an IVFFlat index in pgvector?",
+      "expected_uris": ["README.md"]
+    },
+    {
+      "id": "mvcc",
+      "question": "What is MVCC in Postgres?",
+      "expected_uris": ["mvcc.html"]
+    }
+  ]
+}

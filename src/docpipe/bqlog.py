@@ -8,7 +8,10 @@ from docpipe.config import GCP_PROJECT
 
 BQ_DATASET = os.environ.get("BQ_DATASET", "docpipe_p1")
 BQ_TABLE = os.environ.get("BQ_QUERY_LOGS_TABLE", "query_logs")
-SKIP_BQ = os.environ.get("DOCS_SKIP_BQ", "") == "1"
+
+
+def skip_bq() -> bool:
+    return os.environ.get("DOCS_SKIP_BQ", "") == "1"
 
 
 class BqSink(Protocol):
@@ -34,7 +37,7 @@ class BigQueryLog:
         return f"{self.project}.{self.dataset}.{self.table}"
 
     def write_query_log(self, row: dict) -> None:
-        if SKIP_BQ:
+        if skip_bq():
             return
         client = self._client_obj()
         self._ensure_table(client)
@@ -95,6 +98,19 @@ def query_log_row(
 
 
 def default_bq_sink() -> BqSink:
-    if SKIP_BQ:
+    if skip_bq():
         return NullBqSink()
     return BigQueryLog()
+
+
+def write_bq_rows(table: str, schema: list, rows: list[dict]) -> None:
+    if skip_bq() or not rows:
+        return
+    from google.cloud import bigquery
+
+    client = bigquery.Client(project=GCP_PROJECT)
+    table_id = f"{GCP_PROJECT}.{BQ_DATASET}.{table}"
+    client.create_table(bigquery.Table(table_id, schema=schema), exists_ok=True)
+    errors = client.insert_rows_json(table_id, rows)
+    if errors:
+        raise RuntimeError(f"BigQuery insert failed for {table}: {errors}")

@@ -38,6 +38,8 @@ class AppConfig:
     k_default: int
     k_max: int
     max_context_chars: int
+    unique_documents: bool
+    eval_pool_k: int
     chunk_strategy: str
     chunk_size: int
     chunk_overlap: int
@@ -53,6 +55,7 @@ def load_config() -> AppConfig:
     gcp = raw["gcp"]
     generation = raw.get("generation") or {}
     serve = raw.get("serve") or {}
+    evaluation = raw.get("eval") or {}
     dim = int(embedding["dim"])
     if dim != SQL_DIM:
         raise ValueError(
@@ -70,6 +73,8 @@ def load_config() -> AppConfig:
         k_default=int(serve.get("k_default") or 5),
         k_max=int(serve.get("k_max") or 8),
         max_context_chars=int(serve.get("max_context_chars") or 6000),
+        unique_documents=bool(evaluation.get("unique_documents") or False),
+        eval_pool_k=int(evaluation.get("pool_k") or 15),
         chunk_strategy=str(chunk["strategy"]),
         chunk_size=int(chunk["size"]),
         chunk_overlap=int(chunk["overlap"]),
@@ -89,6 +94,8 @@ QUESTION_MAX_CHARS = _CFG.question_max_chars
 K_DEFAULT = _CFG.k_default
 K_MAX = _CFG.k_max
 MAX_CONTEXT_CHARS = _CFG.max_context_chars
+UNIQUE_DOCUMENTS = _CFG.unique_documents
+EVAL_POOL_K = _CFG.eval_pool_k
 CHUNK_STRATEGY = _CFG.chunk_strategy
 CHUNK_SIZE = _CFG.chunk_size
 CHUNK_OVERLAP = _CFG.chunk_overlap

@@ -6,18 +6,26 @@ Living document. Newest entry at the top.
 
 | Field | Value |
 | --- | --- |
-| Phase | **D5 / M5 complete.** Next is **D6 eval + Dataform** (Sun 11/01) |
+| Phase | **D6 / M6 complete.** Next is **D7 ship** (Sun 11/02) |
 | Date | 2026-10-27 |
 | Ship | 2026-11-02 |
 | Cost cap | $25 |
 | GCP project | `docpipe-p1` (number `129492415939`) ACTIVE |
-| Cloud SQL | `docpipe-pg` **STOPPED** / `NEVER` (reconfirmed 2026-10-27 after D5) |
+| Cloud SQL | `docpipe-pg` **STOPPED** / `NEVER` |
 | Local DB | 36 live docs, 188 chunks, 188 embeddings on `:5433` |
 | Model | embed `text-embedding-004` dim **768**; generate `gemini-3-flash-preview` (global) |
-| Index | `embeddings_hnsw` (cosine) + `search_chunks` |
+| Index | `embeddings_hnsw` (cosine) + unique-document collapse (`pool_k=15`) |
+| Eval | recall@5 **1.000** (28/28 unique docs) vs 0.964 raw; Dataform 4/4 green |
 | API | `127.0.0.1:8080` `/ask` `/health` `/stats` |
 | Blocker | None |
-| Next | D6 golden set + recall@5 + Dataform. Leave SQL stopped. |
+| Next | D7 Cloud Run service + tag v1.0. Leave SQL stopped. |
+
+## 2026-10-27 night — M6 eval + Dataform (ahead of calendar)
+
+- `eval/golden.json`: 28 questions. Harness `docpipe eval`. Winner persisted as `eval-unique-d6`.
+- Tune: unique-document collapse vs raw top-5. Raw **0.964** (27/28, miss=`mvcc`). Unique **1.000** (28/28). Adopted `eval.unique_documents: true`.
+- Dataform CLI 4/4 passed on BQ: `recall_at_5`, `empty_extract_rate`, `cited_or_refused`, `incremental_noop`.
+- pytest 31 passed. Cloud SQL left **STOPPED**. GitHub #12 closing with this commit.
 
 ## 2026-10-27 00:51 — D5 test run
 
@@ -80,3 +88,4 @@ Living document. Newest entry at the top.
 | D3 | 2026-10-26 | night | **M3 done** | 188 chunks + embeddings; HNSW; 5 logged queries |
 | D4 | 2026-10-26 | night | **M4 done** | Hash sync; fail-the-job tests; Cloud Run job TF |
 | D5 | 2026-10-27 | night | **M5 done** | `/ask` citations + refusal; logs in BQ |
+| D6 | 2026-10-27 | night | **M6 done** | recall@5 1.000; Dataform 4/4; unique-docs adopted |
