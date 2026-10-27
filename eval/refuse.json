@@ -1,0 +1,48 @@
+{
+  "version": 1,
+  "metric": "refuse_accuracy",
+  "bar": 1.0,
+  "notes": "Off-corpus questions must refuse. Gemini is not called. Expected refused=true.",
+  "items": [
+    {
+      "id": "weather",
+      "question": "What is the weather in Paris tomorrow?",
+      "expect_refused": true
+    },
+    {
+      "id": "sourdough",
+      "question": "How do I bake sourdough bread at home?",
+      "expect_refused": true
+    },
+    {
+      "id": "basketball",
+      "question": "What was the score of last night's basketball game?",
+      "expect_refused": true
+    },
+    {
+      "id": "tire",
+      "question": "How do I change a flat tire on my car?",
+      "expect_refused": true
+    },
+    {
+      "id": "stocks",
+      "question": "What will the stock market do tomorrow?",
+      "expect_refused": true
+    },
+    {
+      "id": "cat-poem",
+      "question": "Write a poem about my cat named Miso.",
+      "expect_refused": true
+    },
+    {
+      "id": "restaurant",
+      "question": "What is the best restaurant in Boston right now?",
+      "expect_refused": true
+    },
+    {
+      "id": "passport",
+      "question": "How do I renew a French passport this week?",
+      "expect_refused": true
+    }
+  ]
+}

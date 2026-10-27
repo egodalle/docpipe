@@ -142,7 +142,8 @@ function renderResult(body) {
   const latency = body.latency_ms == null ? "—" : `${body.latency_ms} ms`;
   const rid = body.request_id ? body.request_id.slice(0, 8) : "—";
   const mode = body.retrieval_mode || "vector";
-  setText(resultMeta, `${mode} · ${latency} · ${rid}`);
+  const cites = body.citation_ok == null ? "" : body.citation_ok ? " · cites ok" : " · cites fail";
+  setText(resultMeta, `${mode} · ${latency} · ${rid}${cites}`);
   renderAnswer(
     answerEl,
     refused

@@ -54,6 +54,11 @@ def main(argv: list[str] | None = None) -> int:
     )
     ev.add_argument("--hybrid", action="store_true", help="Force hybrid retrieval")
     ev.add_argument("--vector", action="store_true", help="Force vector-only retrieval")
+    ev.add_argument(
+        "--refuse",
+        action="store_true",
+        help="Score eval/refuse.json (off-corpus questions must refuse)",
+    )
     ev.add_argument("--seed-ingest-run", action="store_true")
     ev.add_argument("--run-id", default=None)
     gcs = sub.add_parser("upload-gcs", help="Copy data/raw and licenses.csv to GCS")
@@ -136,14 +141,27 @@ def main(argv: list[str] | None = None) -> int:
             RECALL_BAR,
             compare_hybrid,
             compare_tunes,
+            format_refuse_report,
             format_report,
             run_eval,
+            run_refuse_eval,
             seed_ingest_run_bq,
         )
 
         if args.seed_ingest_run:
             ingest_id = seed_ingest_run_bq()
             print(f"seeded ingest_runs run_id={ingest_id}")
+        if args.refuse:
+            if args.compare or args.compare_hybrid:
+                parser.error("--refuse cannot be combined with --compare")
+            report = run_refuse_eval(
+                k=args.k,
+                persist=not args.no_persist,
+                run_id=args.run_id,
+                hybrid=True if args.hybrid else (False if args.vector else None),
+            )
+            print(format_refuse_report(report))
+            return 0 if report.meets_bar else 2
         if args.compare and args.compare_hybrid:
             parser.error("use only one of --compare / --compare-hybrid")
         if args.compare:
@@ -207,8 +225,9 @@ def main(argv: list[str] | None = None) -> int:
 def _print_ask(result) -> None:
     status = "refused" if result.refused else "answered"
     print(
-        f"ask {status} mode={result.retrieval_mode} model={result.model} "
-        f"latency_ms={result.latency_ms} request_id={result.request_id}"
+        f"ask {status} mode={result.retrieval_mode} citation_ok={result.citation_ok} "
+        f"model={result.model} latency_ms={result.latency_ms} "
+        f"request_id={result.request_id}"
     )
     if result.answer:
         print(result.answer)

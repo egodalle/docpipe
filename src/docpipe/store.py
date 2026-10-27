@@ -88,6 +88,12 @@ def apply_hybrid_schema(conn: psycopg.Connection) -> None:
         conn.execute(statement)
 
 
+def apply_citation_schema(conn: psycopg.Connection) -> None:
+    script = (SQL_DIR / "004_citation_ok.sql").read_text(encoding="utf-8")
+    for statement in _sql_statements(script):
+        conn.execute(statement)
+
+
 def document_is_indexed(
     conn: psycopg.Connection,
     document_id: str,
@@ -297,6 +303,7 @@ def search_chunks_lexical(
 
 
 def query_log_metrics(conn: psycopg.Connection) -> dict:
+    apply_citation_schema(conn)
     row = conn.execute(
         """
         SELECT
@@ -319,12 +326,23 @@ def query_log_metrics(conn: psycopg.Connection) -> dict:
     refused = int(row[1] or 0)
     p50 = row[2]
     p95 = row[3]
+    integrity = conn.execute(
+        """
+        SELECT
+            count(*) FILTER (WHERE NOT refused AND citation_ok IS NOT NULL),
+            count(*) FILTER (WHERE NOT refused AND citation_ok)
+        FROM query_logs
+        """
+    ).fetchone()
+    checked = int(integrity[0] or 0) if integrity else 0
+    ok = int(integrity[1] or 0) if integrity else 0
     return {
         "asks": asks,
         "refused": refused,
         "refuse_rate": (refused / asks) if asks else 0.0,
         "latency_p50_ms": None if p50 is None else int(round(float(p50))),
         "latency_p95_ms": None if p95 is None else int(round(float(p95))),
+        "citation_ok_rate": (ok / checked) if checked else None,
     }
 
 
@@ -339,13 +357,16 @@ def insert_query_log(
     model: str,
     refused: bool = False,
     answer: str | None = None,
+    citation_ok: bool | None = None,
 ) -> None:
+    apply_citation_schema(conn)
     conn.execute(
         """
         INSERT INTO query_logs (
-            request_id, question, chunk_ids, scores, answer, refused, latency_ms, model
+            request_id, question, chunk_ids, scores, answer, refused,
+            latency_ms, model, citation_ok
         )
-        VALUES (%s, %s, %s::uuid[], %s, %s, %s, %s, %s)
+        VALUES (%s, %s, %s::uuid[], %s, %s, %s, %s, %s, %s)
         """,
         (
             request_id,
@@ -356,6 +377,7 @@ def insert_query_log(
             refused,
             latency_ms,
             model,
+            citation_ok,
         ),
     )
 
