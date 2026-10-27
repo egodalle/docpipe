@@ -21,6 +21,12 @@ Living document. Newest entry at the top.
 | Blocker | None |
 | Next | Leave SQL stopped. Spend stays under $25. |
 
+## 2026-10-27 — refuse eval + citation integrity (feature branch)
+
+- `eval/refuse.json` (8 questions). `docpipe eval --refuse` — embeddings only, no Gemini. Bar 1.00.
+- `/ask` sets `citation_ok`: cited chunk ids ⊆ retrieved; refused ⇒ no answer. `query_logs.citation_ok` via `sql/004_citation_ok.sql`.
+- Cloud SQL not used.
+
 ## 2026-10-27 — hybrid retrieval + operator stats (feature branch)
 
 - `sql/003_hybrid.sql`: `chunks.body_tsv` GIN + RRF with HNSW. Citation score stays cosine (refuse floor unchanged).

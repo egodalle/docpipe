@@ -117,7 +117,10 @@ Vector cosine is fused with Postgres full-text (`tsvector` + GIN) via reciprocal
 
 ```bash
 docpipe eval --compare-hybrid --no-persist
+docpipe eval --refuse --no-persist
 ```
+
+Refuse eval scores 8 off-corpus questions (`eval/refuse.json`). Bar: **all must refuse** (Gemini is not called). `/ask` also checks citation integrity: `[chunk_id]` in the answer must be retrieved ids (`query_logs.citation_ok`, [ADR 0008](docs/adr/0008-refuse-eval-citation-integrity.md)).
 
 ```bash
 docpipe eval --compare --no-persist

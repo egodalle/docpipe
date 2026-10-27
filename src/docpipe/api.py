@@ -53,6 +53,7 @@ class AskResponse(BaseModel):
     citations: list[CitationOut]
     latency_ms: int
     retrieval_mode: str = "vector"
+    citation_ok: bool | None = None
 
 
 def get_embedding_client() -> EmbeddingClient:
@@ -145,6 +146,7 @@ def post_ask(
         ],
         latency_ms=result.latency_ms,
         retrieval_mode=result.retrieval_mode,
+        citation_ok=result.citation_ok,
     )
 
 

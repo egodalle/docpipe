@@ -30,6 +30,16 @@ docpipe eval --unique-documents --seed-ingest-run
 docpipe eval --compare-hybrid --no-persist
 ```
 
+## Refuse contract (post-v1.0)
+
+`eval/refuse.json` — 8 off-corpus questions. Hit if the pipeline refuses (`top score < 0.60`, no Gemini). Bar: **refuse_accuracy = 1.00**. Live 2026-10-27: **8/8 (1.000)** on local `:5433`.
+
+```bash
+docpipe eval --refuse --no-persist
+```
+
+Citation integrity is per `/ask`: cited `[uuid]` values must be in the retrieved set. Refused asks must have a null answer. See [ADR 0008](../docs/adr/0008-refuse-eval-citation-integrity.md).
+
 ## Hybrid (post-v1.0)
 
 Second tune: unique-document **vector** vs unique-document **hybrid RRF**. Cosine remains the refuse score. See [ADR 0007](../docs/adr/0007-hybrid-rrf.md). Run `--compare-hybrid` to fill this table on the live corpus.

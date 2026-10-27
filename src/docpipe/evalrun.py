@@ -7,14 +7,22 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from docpipe.bqlog import skip_bq, write_bq_rows
-from docpipe.config import EVAL_POOL_K, HYBRID_RETRIEVAL, ROOT, UNIQUE_DOCUMENTS
+from docpipe.config import (
+    EVAL_POOL_K,
+    HYBRID_RETRIEVAL,
+    REFUSE_MIN_SCORE,
+    ROOT,
+    UNIQUE_DOCUMENTS,
+)
 from docpipe.embed import EmbeddingClient, VertexEmbeddingClient
 from docpipe.models import SearchHit
 from docpipe.retrieve import pick_topk, retrieve_hits, uri_basename
 from docpipe.store import connect, insert_eval_result
 
 GOLDEN_PATH = ROOT / "eval" / "golden.json"
+REFUSE_PATH = ROOT / "eval" / "refuse.json"
 RECALL_BAR = 0.70
+REFUSE_BAR = 1.0
 
 
 @dataclass
@@ -146,6 +154,137 @@ def format_report(report: EvalReport) -> str:
         for item in misses:
             lines.append(
                 f"- {item.question_id} retrieved={item.retrieved}"
+            )
+    return "\n".join(lines)
+
+
+@dataclass
+class RefuseItem:
+    id: str
+    question: str
+    expect_refused: bool
+
+
+@dataclass
+class RefuseScore:
+    question_id: str
+    question: str
+    expected: bool
+    refused: bool
+    top_score: float
+    latency_ms: int
+    retrieved: list[str]
+
+
+@dataclass
+class RefuseReport:
+    run_id: str
+    n: int
+    hits: int
+    refuse_accuracy: float
+    items: list[RefuseScore] = field(default_factory=list)
+
+    @property
+    def meets_bar(self) -> bool:
+        return self.refuse_accuracy >= REFUSE_BAR
+
+
+def load_refuse(path: Path | None = None) -> list[RefuseItem]:
+    raw = json.loads((path or REFUSE_PATH).read_text(encoding="utf-8"))
+    items = [
+        RefuseItem(
+            id=str(row["id"]),
+            question=str(row["question"]),
+            expect_refused=bool(row.get("expect_refused", True)),
+        )
+        for row in raw["items"]
+    ]
+    if len(items) < 5:
+        raise ValueError(f"refuse set must have at least 5 items, got {len(items)}")
+    return items
+
+
+def run_refuse_eval(
+    *,
+    k: int = 5,
+    database_url: str | None = None,
+    embedding_client: EmbeddingClient | None = None,
+    refuse_path: Path | None = None,
+    run_id: str | None = None,
+    persist: bool = True,
+    hybrid: bool | None = None,
+) -> RefuseReport:
+    items = load_refuse(refuse_path)
+    client = embedding_client or VertexEmbeddingClient()
+    rid = run_id or f"refuse-{uuid.uuid4().hex[:10]}"
+    scores: list[RefuseScore] = []
+    for item in items:
+        started = time.perf_counter()
+        vector = client.embed_query(item.question)
+        with connect(database_url) as conn:
+            hits = retrieve_hits(
+                conn,
+                question=item.question,
+                query_embedding=vector,
+                k=k,
+                hybrid=hybrid,
+            )
+        top = hits[0].score if hits else 0.0
+        refused = (not hits) or top < REFUSE_MIN_SCORE
+        latency_ms = int((time.perf_counter() - started) * 1000)
+        scores.append(
+            RefuseScore(
+                question_id=item.id,
+                question=item.question,
+                expected=item.expect_refused,
+                refused=refused,
+                top_score=top,
+                latency_ms=latency_ms,
+                retrieved=[uri_basename(hit.uri) for hit in hits],
+            )
+        )
+    n_hits = sum(1 for row in scores if row.refused == row.expected)
+    report = RefuseReport(
+        run_id=rid,
+        n=len(scores),
+        hits=n_hits,
+        refuse_accuracy=n_hits / len(scores) if scores else 0.0,
+        items=scores,
+    )
+    if persist:
+        persist_refuse(report, database_url=database_url)
+    return report
+
+
+def persist_refuse(report: RefuseReport, database_url: str | None = None) -> None:
+    # Postgres only. Do not copy to BigQuery eval_results — Dataform
+    # scores the latest recall@5 run and must not see refuse rows.
+    with connect(database_url) as conn:
+        for row in report.items:
+            insert_eval_result(
+                conn,
+                run_id=report.run_id,
+                question_id=row.question_id,
+                recall_at_5=row.refused == row.expected,
+                citation_hit=row.refused,
+                latency_ms=row.latency_ms,
+            )
+
+
+def format_refuse_report(report: RefuseReport) -> str:
+    gate = "PASS" if report.meets_bar else "FAIL"
+    lines = [
+        f"refuse run_id={report.run_id} n={report.n} hits={report.hits} "
+        f"refuse_accuracy={report.refuse_accuracy:.3f} bar={REFUSE_BAR:.2f} {gate}"
+    ]
+    misses = [item for item in report.items if item.refused != item.expected]
+    if misses:
+        lines.append("misses:")
+        for item in misses:
+            lines.append(
+                f"- {item.question_id} refused={item.refused} "
+                f"expected={item.expected} top={item.top_score:.3f} "
+                f"retrieved={item.retrieved}"
             )
     return "\n".join(lines)
 

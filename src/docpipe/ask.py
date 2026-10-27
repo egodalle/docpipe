@@ -15,6 +15,7 @@ from docpipe.config import (
 )
 from docpipe.embed import EmbeddingClient, VertexEmbeddingClient
 from docpipe.generate import Generator, VertexGenerator
+from docpipe.citations import citation_ok
 from docpipe.licenses import license_for_uri
 from docpipe.models import SearchHit, Source
 from docpipe.retrieve import retrieve_hits
@@ -45,6 +46,7 @@ class AskAnswer:
     latency_ms: int
     model: str
     retrieval_mode: str = "vector"
+    citation_ok: bool = True
     hits: list[SearchHit] = field(default_factory=list)
 
 
@@ -133,6 +135,7 @@ def ask(
         if not refused:
             answer = gen.generate(cleaned, hits)
             model = gen.model_name
+        integrity = citation_ok(refused=refused, answer=answer, hits=hits)
         latency_ms = int((time.perf_counter() - started) * 1000)
         insert_query_log(
             conn,
@@ -144,6 +147,7 @@ def ask(
             model=model,
             refused=refused,
             answer=answer,
+            citation_ok=integrity,
         )
     try:
         sink.write_query_log(
@@ -170,5 +174,6 @@ def ask(
         latency_ms=latency_ms,
         model=model,
         retrieval_mode="hybrid" if use_hybrid else "vector",
+        citation_ok=integrity,
         hits=hits,
     )

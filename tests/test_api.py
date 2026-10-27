@@ -26,7 +26,7 @@ class FakeGenerator:
 
     def generate(self, question: str, hits) -> str:
         self.calls.append((question, [hit.chunk_id for hit in hits]))
-        return f"Cited answer about {hits[0].body.split()[0]}"
+        return f"Cited answer about {hits[0].body.split()[0]} [{hits[0].chunk_id}]"
 
 
 class RecordingBq:
@@ -101,6 +101,7 @@ def test_health_and_stats(api) -> None:
     assert "refuse_rate" in body
     assert body["retrieval_mode"] in {"hybrid", "vector"}
     assert "asks" in body
+    assert "citation_ok_rate" in body
 
 
 def test_ask_returns_citations(api) -> None:
@@ -118,6 +119,7 @@ def test_ask_returns_citations(api) -> None:
     assert body["citations"][0]["score"] >= REFUSE_MIN_SCORE
     assert body["retrieval_mode"] in {"hybrid", "vector"}
     assert "source" in body["citations"][0]
+    assert body["citation_ok"] is True
     assert gen.calls
     assert bq.rows and bq.rows[0]["refused"] is False
     with connect() as conn:
