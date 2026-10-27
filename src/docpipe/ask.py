@@ -6,19 +6,19 @@ from dataclasses import dataclass, field
 
 from docpipe.bqlog import BqSink, default_bq_sink, query_log_row
 from docpipe.config import (
-    EVAL_POOL_K,
     GENERATION_MODEL,
+    HYBRID_RETRIEVAL,
     K_DEFAULT,
     K_MAX,
     QUESTION_MAX_CHARS,
     REFUSE_MIN_SCORE,
-    UNIQUE_DOCUMENTS,
 )
 from docpipe.embed import EmbeddingClient, VertexEmbeddingClient
 from docpipe.generate import Generator, VertexGenerator
-from docpipe.evalrun import pick_topk
+from docpipe.licenses import license_for_uri
 from docpipe.models import SearchHit, Source
-from docpipe.store import connect, insert_query_log, search_chunks
+from docpipe.retrieve import retrieve_hits
+from docpipe.store import connect, insert_query_log
 
 
 class AskValidationError(ValueError):
@@ -31,6 +31,8 @@ class Citation:
     chunk_id: str
     snippet: str
     score: float
+    source: str = ""
+    license: str | None = None
 
 
 @dataclass
@@ -42,6 +44,7 @@ class AskAnswer:
     citations: list[Citation]
     latency_ms: int
     model: str
+    retrieval_mode: str = "vector"
     hits: list[SearchHit] = field(default_factory=list)
 
 
@@ -53,15 +56,20 @@ def snippet(body: str, limit: int = 240) -> str:
 
 
 def citations_from_hits(hits: list[SearchHit]) -> list[Citation]:
-    return [
-        Citation(
-            uri=hit.uri,
-            chunk_id=hit.chunk_id,
-            snippet=snippet(hit.body),
-            score=hit.score,
+    citations: list[Citation] = []
+    for hit in hits:
+        licensed = license_for_uri(hit.uri)
+        citations.append(
+            Citation(
+                uri=hit.uri,
+                chunk_id=hit.chunk_id,
+                snippet=snippet(hit.body),
+                score=hit.score,
+                source=hit.source,
+                license=None if licensed is None else licensed.license,
+            )
         )
-        for hit in hits
-    ]
+    return citations
 
 
 def validate_ask(
@@ -99,20 +107,24 @@ def ask(
     embedding_client: EmbeddingClient | None = None,
     generator: Generator | None = None,
     bq: BqSink | None = None,
+    hybrid: bool | None = None,
 ) -> AskAnswer:
     cleaned, use_k, use_source = validate_ask(question, k=k, source=source)
     embedder = embedding_client or VertexEmbeddingClient()
     gen = generator or VertexGenerator()
     sink = bq if bq is not None else default_bq_sink()
     req = request_id or str(uuid.uuid4())
+    use_hybrid = HYBRID_RETRIEVAL if hybrid is None else hybrid
     started = time.perf_counter()
     vector = embedder.embed_query(cleaned)
     with connect(database_url) as conn:
-        fetch_k = max(use_k, EVAL_POOL_K if UNIQUE_DOCUMENTS else use_k)
-        hits = pick_topk(
-            search_chunks(conn, vector, k=fetch_k, source=use_source),
+        hits = retrieve_hits(
+            conn,
+            question=cleaned,
+            query_embedding=vector,
             k=use_k,
-            unique_documents=UNIQUE_DOCUMENTS,
+            source=use_source,
+            hybrid=use_hybrid,
         )
         top = hits[0].score if hits else 0.0
         refused = (not hits) or top < REFUSE_MIN_SCORE
@@ -157,5 +169,6 @@ def ask(
         citations=citations_from_hits(hits),
         latency_ms=latency_ms,
         model=model,
+        retrieval_mode="hybrid" if use_hybrid else "vector",
         hits=hits,
     )

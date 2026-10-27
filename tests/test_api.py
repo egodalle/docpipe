@@ -98,6 +98,9 @@ def test_health_and_stats(api) -> None:
     assert body["embeddings"] >= 2
     assert body["embedding_dim"] == 768
     assert "query_logs" in body
+    assert "refuse_rate" in body
+    assert body["retrieval_mode"] in {"hybrid", "vector"}
+    assert "asks" in body
 
 
 def test_ask_returns_citations(api) -> None:
@@ -113,6 +116,8 @@ def test_ask_returns_citations(api) -> None:
     assert body["citations"]
     assert "a.md" in body["citations"][0]["uri"]
     assert body["citations"][0]["score"] >= REFUSE_MIN_SCORE
+    assert body["retrieval_mode"] in {"hybrid", "vector"}
+    assert "source" in body["citations"][0]
     assert gen.calls
     assert bq.rows and bq.rows[0]["refused"] is False
     with connect() as conn:

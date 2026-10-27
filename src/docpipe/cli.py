@@ -47,6 +47,13 @@ def main(argv: list[str] | None = None) -> int:
     ev.add_argument("--pool-k", type=int, default=None)
     ev.add_argument("--no-persist", action="store_true")
     ev.add_argument("--compare", action="store_true", help="Raw top-k vs unique documents")
+    ev.add_argument(
+        "--compare-hybrid",
+        action="store_true",
+        help="Unique vector vs unique hybrid (RRF)",
+    )
+    ev.add_argument("--hybrid", action="store_true", help="Force hybrid retrieval")
+    ev.add_argument("--vector", action="store_true", help="Force vector-only retrieval")
     ev.add_argument("--seed-ingest-run", action="store_true")
     ev.add_argument("--run-id", default=None)
     gcs = sub.add_parser("upload-gcs", help="Copy data/raw and licenses.csv to GCS")
@@ -127,6 +134,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.cmd == "eval":
         from docpipe.evalrun import (
             RECALL_BAR,
+            compare_hybrid,
             compare_tunes,
             format_report,
             run_eval,
@@ -136,6 +144,8 @@ def main(argv: list[str] | None = None) -> int:
         if args.seed_ingest_run:
             ingest_id = seed_ingest_run_bq()
             print(f"seeded ingest_runs run_id={ingest_id}")
+        if args.compare and args.compare_hybrid:
+            parser.error("use only one of --compare / --compare-hybrid")
         if args.compare:
             baseline, unique, winner = compare_tunes(
                 k=args.k,
@@ -148,8 +158,22 @@ def main(argv: list[str] | None = None) -> int:
                 f"recall@5={winner.recall_at_5:.3f} run_id={winner.run_id}"
             )
             return 0 if winner.meets_bar else 2
+        if args.compare_hybrid:
+            vector, hybrid, winner = compare_hybrid(
+                k=args.k,
+                persist_winner=not args.no_persist,
+            )
+            print(format_report(vector))
+            print(format_report(hybrid))
+            print(
+                f"winner hybrid={winner.hybrid} "
+                f"recall@5={winner.recall_at_5:.3f} run_id={winner.run_id}"
+            )
+            return 0 if winner.meets_bar else 2
         if args.unique_documents and args.raw:
             parser.error("use only one of --unique-documents / --raw")
+        if args.hybrid and args.vector:
+            parser.error("use only one of --hybrid / --vector")
         unique_flag: bool | None
         if args.unique_documents:
             unique_flag = True
@@ -157,8 +181,16 @@ def main(argv: list[str] | None = None) -> int:
             unique_flag = False
         else:
             unique_flag = None
+        hybrid_flag: bool | None
+        if args.hybrid:
+            hybrid_flag = True
+        elif args.vector:
+            hybrid_flag = False
+        else:
+            hybrid_flag = None
         report = run_eval(
             unique_documents=unique_flag,
+            hybrid=hybrid_flag,
             k=args.k,
             pool_k=args.pool_k,
             persist=not args.no_persist,
@@ -175,14 +207,15 @@ def main(argv: list[str] | None = None) -> int:
 def _print_ask(result) -> None:
     status = "refused" if result.refused else "answered"
     print(
-        f"ask {status} model={result.model} latency_ms={result.latency_ms} "
-        f"request_id={result.request_id}"
+        f"ask {status} mode={result.retrieval_mode} model={result.model} "
+        f"latency_ms={result.latency_ms} request_id={result.request_id}"
     )
     if result.answer:
         print(result.answer)
     for rank, cite in enumerate(result.citations, start=1):
         print(
-            f"{rank}. score={cite.score:.4f} chunk_id={cite.chunk_id} uri={cite.uri}\n"
+            f"{rank}. score={cite.score:.4f} source={cite.source} "
+            f"license={cite.license or '-'} uri={cite.uri}\n"
             f"   {cite.snippet}"
         )
 

@@ -82,6 +82,12 @@ def apply_d3_schema(conn: psycopg.Connection) -> None:
         conn.execute(statement)
 
 
+def apply_hybrid_schema(conn: psycopg.Connection) -> None:
+    script = (SQL_DIR / "003_hybrid.sql").read_text(encoding="utf-8")
+    for statement in _sql_statements(script):
+        conn.execute(statement)
+
+
 def document_is_indexed(
     conn: psycopg.Connection,
     document_id: str,
@@ -231,6 +237,97 @@ def search_chunks(
     return hits
 
 
+def search_chunks_lexical(
+    conn: psycopg.Connection,
+    question: str,
+    k: int = 5,
+    source: str | None = None,
+) -> list[SearchHit]:
+    if k <= 0:
+        raise ValueError("k must be > 0")
+    cleaned = " ".join((question or "").split())
+    if not cleaned:
+        return []
+    empty = conn.execute("SELECT plainto_tsquery('english', %s)::text", (cleaned,)).fetchone()
+    if empty is None or not str(empty[0] or "").strip():
+        return []
+    if source:
+        rows = conn.execute(
+            """
+            SELECT c.id, c.document_id, d.uri, d.source, c.ordinal, c.body,
+                   ts_rank_cd(c.body_tsv, plainto_tsquery('english', %s))::double precision AS score
+            FROM chunks c
+            JOIN documents d ON d.id = c.document_id
+            WHERE d.status = 'live'
+              AND d.source = %s
+              AND c.body_tsv @@ plainto_tsquery('english', %s)
+            ORDER BY score DESC, c.ordinal
+            LIMIT %s
+            """,
+            (cleaned, source, cleaned, k),
+        ).fetchall()
+    else:
+        rows = conn.execute(
+            """
+            SELECT c.id, c.document_id, d.uri, d.source, c.ordinal, c.body,
+                   ts_rank_cd(c.body_tsv, plainto_tsquery('english', %s))::double precision AS score
+            FROM chunks c
+            JOIN documents d ON d.id = c.document_id
+            WHERE d.status = 'live'
+              AND c.body_tsv @@ plainto_tsquery('english', %s)
+            ORDER BY score DESC, c.ordinal
+            LIMIT %s
+            """,
+            (cleaned, cleaned, k),
+        ).fetchall()
+    hits: list[SearchHit] = []
+    for row in rows:
+        hits.append(
+            SearchHit(
+                chunk_id=_as_text(row[0]),
+                document_id=_as_text(row[1]),
+                uri=str(row[2]),
+                source=str(row[3]),
+                ordinal=int(row[4]),
+                body=str(row[5]),
+                score=float(row[6]),
+            )
+        )
+    return hits
+
+
+def query_log_metrics(conn: psycopg.Connection) -> dict:
+    row = conn.execute(
+        """
+        SELECT
+            (SELECT count(*) FROM query_logs) AS asks,
+            (SELECT count(*) FROM query_logs WHERE refused) AS refused,
+            (
+                SELECT percentile_cont(0.50) WITHIN GROUP (ORDER BY latency_ms)
+                FROM query_logs
+                WHERE latency_ms IS NOT NULL
+            ) AS latency_p50,
+            (
+                SELECT percentile_cont(0.95) WITHIN GROUP (ORDER BY latency_ms)
+                FROM query_logs
+                WHERE latency_ms IS NOT NULL
+            ) AS latency_p95
+        """
+    ).fetchone()
+    assert row is not None
+    asks = int(row[0] or 0)
+    refused = int(row[1] or 0)
+    p50 = row[2]
+    p95 = row[3]
+    return {
+        "asks": asks,
+        "refused": refused,
+        "refuse_rate": (refused / asks) if asks else 0.0,
+        "latency_p50_ms": None if p50 is None else int(round(float(p50))),
+        "latency_p95_ms": None if p95 is None else int(round(float(p95))),
+    }
+
+
 def insert_query_log(
     conn: psycopg.Connection,
     *,
@@ -329,6 +426,12 @@ def _sql_statements(script: str) -> list[str]:
             index = end + 2
             continue
         char = script[index]
+        if char == "-" and index + 1 < len(script) and script[index + 1] == "-":
+            newline = script.find("\n", index)
+            if newline < 0:
+                break
+            index = newline + 1
+            continue
         if char == ";":
             stmt = "".join(buf).strip()
             if stmt and not all(

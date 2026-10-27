@@ -109,6 +109,16 @@ One-variable tune — unique-document collapse vs raw top-5 chunks:
 
 Winner is the default: `eval.unique_documents: true`, `pool_k: 15` in `config.yaml`. `/ask` uses the same collapse. Baseline: [`eval/baseline.md`](eval/baseline.md).
 
+## Hybrid retrieval (post-v1.0)
+
+Vector cosine is fused with Postgres full-text (`tsvector` + GIN) via reciprocal rank fusion. Citation **score stays cosine**, so the 0.60 refuse floor does not change meaning. Default: `retrieval.hybrid: true` ([ADR 0007](docs/adr/0007-hybrid-rrf.md)).
+
+`GET /stats` also reports operator numbers: `asks`, `refused`, `refuse_rate`, `latency_p50_ms`, `latency_p95_ms`. Citations include `source` and `license` from `data/licenses.csv`.
+
+```bash
+docpipe eval --compare-hybrid --no-persist
+```
+
 ```bash
 docpipe eval --compare --no-persist
 docpipe eval                 # persist winner rows to Postgres + BigQuery

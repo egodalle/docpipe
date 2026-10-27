@@ -10,3 +10,4 @@ Format: title, status, context, decision, consequences. Numbers are append-only.
 | [0004](0004-prototype-to-gcp.md) | Keep v0 repo; lift to GCP; do not restart a tutorial | Accepted |
 | [0005](0005-seven-day-sprint.md) | Compress P1 to 7 days; $25 cap | Accepted |
 | [0006](0006-dataform-for-warehouse-tests.md) | Dataform assertions on BigQuery; pytest keeps the job | Accepted |
+| [0007](0007-hybrid-rrf.md) | Hybrid lexical + vector RRF in Postgres | Accepted |

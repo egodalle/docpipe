@@ -16,6 +16,9 @@ serve:
 eval:
   unique_documents: true
   pool_k: 15
+retrieval:
+  hybrid: true
+  rrf_k: 60
 chunk:
   strategy: recursive_400_80
   size: 400

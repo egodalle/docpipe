@@ -14,6 +14,7 @@ services:
     volumes:
       - docpipe-pg-data:/var/lib/postgresql/data
       - ./sql/001_init.sql:/docker-entrypoint-initdb.d/001_init.sql:ro
+      - ./sql/003_hybrid.sql:/docker-entrypoint-initdb.d/003_hybrid.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U docpipe -d docpipe"]
       interval: 5s

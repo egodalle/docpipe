@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import csv
+from functools import lru_cache
 from pathlib import Path
 
 from docpipe.config import LICENSES_CSV
@@ -17,3 +18,17 @@ def load_licenses(path: Path | None = None) -> list[LicenseRow]:
     if len(names) != len(set(names)):
         raise ValueError("duplicate file names in licenses.csv")
     return rows
+
+
+@lru_cache(maxsize=1)
+def licenses_by_file(path: str | None = None) -> dict[str, LicenseRow]:
+    try:
+        rows = load_licenses(Path(path) if path else None)
+    except Exception:
+        return {}
+    return {row.file: row for row in rows}
+
+
+def license_for_uri(uri: str) -> LicenseRow | None:
+    name = uri.rstrip("/").rsplit("/", 1)[-1]
+    return licenses_by_file().get(name)

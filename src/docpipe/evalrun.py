@@ -7,10 +7,11 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from docpipe.bqlog import skip_bq, write_bq_rows
-from docpipe.config import EVAL_POOL_K, ROOT, UNIQUE_DOCUMENTS
+from docpipe.config import EVAL_POOL_K, HYBRID_RETRIEVAL, ROOT, UNIQUE_DOCUMENTS
 from docpipe.embed import EmbeddingClient, VertexEmbeddingClient
 from docpipe.models import SearchHit
-from docpipe.store import connect, insert_eval_result, search_chunks
+from docpipe.retrieve import pick_topk, retrieve_hits, uri_basename
+from docpipe.store import connect, insert_eval_result
 
 GOLDEN_PATH = ROOT / "eval" / "golden.json"
 RECALL_BAR = 0.70
@@ -42,15 +43,12 @@ class EvalReport:
     n: int
     hits: int
     recall_at_5: float
+    hybrid: bool = False
     items: list[ItemScore] = field(default_factory=list)
 
     @property
     def meets_bar(self) -> bool:
         return self.recall_at_5 >= RECALL_BAR
-
-
-def uri_basename(uri: str) -> str:
-    return uri.rstrip("/").rsplit("/", 1)[-1]
 
 
 def load_golden(path: Path | None = None) -> list[GoldenItem]:
@@ -73,26 +71,6 @@ def expected_in_hits(expected_uris: list[str], hits: list[SearchHit]) -> bool:
     return any(name in retrieved for name in expected_uris)
 
 
-def pick_topk(
-    hits: list[SearchHit],
-    k: int = 5,
-    unique_documents: bool = False,
-) -> list[SearchHit]:
-    if not unique_documents:
-        return hits[:k]
-    seen: set[str] = set()
-    picked: list[SearchHit] = []
-    for hit in hits:
-        name = uri_basename(hit.uri)
-        if name in seen:
-            continue
-        seen.add(name)
-        picked.append(hit)
-        if len(picked) >= k:
-            break
-    return picked
-
-
 def run_eval(
     *,
     unique_documents: bool | None = None,
@@ -103,9 +81,11 @@ def run_eval(
     golden_path: Path | None = None,
     run_id: str | None = None,
     persist: bool = True,
+    hybrid: bool | None = None,
 ) -> EvalReport:
     items = load_golden(golden_path)
     use_unique = UNIQUE_DOCUMENTS if unique_documents is None else unique_documents
+    use_hybrid = HYBRID_RETRIEVAL if hybrid is None else hybrid
     fetch_k = pool_k if pool_k is not None else (EVAL_POOL_K if use_unique else k)
     fetch_k = max(fetch_k, k)
     client = embedding_client or VertexEmbeddingClient()
@@ -115,8 +95,15 @@ def run_eval(
         started = time.perf_counter()
         vector = client.embed_query(item.question)
         with connect(database_url) as conn:
-            raw_hits = search_chunks(conn, vector, k=fetch_k)
-        top = pick_topk(raw_hits, k=k, unique_documents=use_unique)
+            top = retrieve_hits(
+                conn,
+                question=item.question,
+                query_embedding=vector,
+                k=k,
+                hybrid=use_hybrid,
+                unique_documents=use_unique,
+                pool_k=fetch_k,
+            )
         hit = expected_in_hits(item.expected_uris, top)
         latency_ms = int((time.perf_counter() - started) * 1000)
         scores.append(
@@ -138,6 +125,7 @@ def run_eval(
         n=len(scores),
         hits=n_hits,
         recall_at_5=n_hits / len(scores) if scores else 0.0,
+        hybrid=use_hybrid,
         items=scores,
     )
     if persist:
@@ -149,8 +137,8 @@ def format_report(report: EvalReport) -> str:
     gate = "PASS" if report.meets_bar else "FAIL"
     lines = [
         f"eval run_id={report.run_id} unique_documents={report.unique_documents} "
-        f"pool_k={report.pool_k} k={report.k} n={report.n} hits={report.hits} "
-        f"recall@5={report.recall_at_5:.3f} bar={RECALL_BAR:.2f} {gate}"
+        f"hybrid={report.hybrid} pool_k={report.pool_k} k={report.k} n={report.n} "
+        f"hits={report.hits} recall@5={report.recall_at_5:.3f} bar={RECALL_BAR:.2f} {gate}"
     ]
     misses = [item for item in report.items if not item.recall_at_5]
     if misses:
@@ -189,6 +177,7 @@ def compare_tunes(
     client = _CachedQueryClient(embedding_client or VertexEmbeddingClient())
     baseline = run_eval(
         unique_documents=False,
+        hybrid=False,
         k=k,
         pool_k=k,
         database_url=database_url,
@@ -199,6 +188,7 @@ def compare_tunes(
     )
     unique = run_eval(
         unique_documents=True,
+        hybrid=False,
         k=k,
         pool_k=EVAL_POOL_K,
         database_url=database_url,
@@ -211,6 +201,43 @@ def compare_tunes(
     if persist_winner:
         persist_eval(winner, database_url=database_url)
     return baseline, unique, winner
+
+
+def compare_hybrid(
+    *,
+    k: int = 5,
+    database_url: str | None = None,
+    embedding_client: EmbeddingClient | None = None,
+    golden_path: Path | None = None,
+    persist_winner: bool = True,
+) -> tuple[EvalReport, EvalReport, EvalReport]:
+    client = _CachedQueryClient(embedding_client or VertexEmbeddingClient())
+    vector = run_eval(
+        unique_documents=True,
+        hybrid=False,
+        k=k,
+        pool_k=EVAL_POOL_K,
+        database_url=database_url,
+        embedding_client=client,
+        golden_path=golden_path,
+        persist=False,
+        run_id=f"eval-vector-{uuid.uuid4().hex[:8]}",
+    )
+    hybrid = run_eval(
+        unique_documents=True,
+        hybrid=True,
+        k=k,
+        pool_k=EVAL_POOL_K,
+        database_url=database_url,
+        embedding_client=client,
+        golden_path=golden_path,
+        persist=False,
+        run_id=f"eval-hybrid-{uuid.uuid4().hex[:8]}",
+    )
+    winner = hybrid if hybrid.recall_at_5 >= vector.recall_at_5 else vector
+    if persist_winner:
+        persist_eval(winner, database_url=database_url)
+    return vector, hybrid, winner
 
 
 def persist_eval(report: EvalReport, database_url: str | None = None) -> None:

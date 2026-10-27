@@ -13,6 +13,7 @@ const SAMPLES = [
 const form = document.getElementById("ask-form");
 const questionEl = document.getElementById("question");
 const kEl = document.getElementById("k");
+const sourceEl = document.getElementById("source");
 const askBtn = document.getElementById("ask-btn");
 const samplesEl = document.getElementById("samples");
 const charCount = document.getElementById("char-count");
@@ -94,9 +95,17 @@ async function loadStatus() {
     const stats = await fetch("/stats");
     if (!stats.ok) return;
     const body = await stats.json();
-    for (const key of ["documents", "chunks", "embeddings", "generation_model"]) {
+    for (const key of ["documents", "chunks", "retrieval_mode"]) {
       const node = document.querySelector(`[data-bind="${key}"]`);
       if (node) setText(node, body[key]);
+    }
+    const refuseRate = document.querySelector('[data-bind="refuse_rate"]');
+    if (refuseRate && body.refuse_rate != null) {
+      setText(refuseRate, `${Math.round(Number(body.refuse_rate) * 100)}%`);
+    }
+    const p50 = document.querySelector('[data-bind="latency_p50_ms"]');
+    if (p50) {
+      setText(p50, body.latency_p50_ms == null ? "—" : `${body.latency_p50_ms} ms`);
     }
     const refuse = document.querySelector('[data-bind="refuse"]');
     if (refuse && body.refuse_min_score != null) {
@@ -132,7 +141,8 @@ function renderResult(body) {
   );
   const latency = body.latency_ms == null ? "—" : `${body.latency_ms} ms`;
   const rid = body.request_id ? body.request_id.slice(0, 8) : "—";
-  setText(resultMeta, `${latency} · ${rid}`);
+  const mode = body.retrieval_mode || "vector";
+  setText(resultMeta, `${mode} · ${latency} · ${rid}`);
   renderAnswer(
     answerEl,
     refused
@@ -154,7 +164,8 @@ function renderResult(body) {
     top.className = "cite-top";
     const file = document.createElement("span");
     file.className = "cite-file";
-    setText(file, basename(cite.uri));
+    const extras = [cite.source, cite.license].filter(Boolean).join(" · ");
+    setText(file, extras ? `${basename(cite.uri)} · ${extras}` : basename(cite.uri));
     const score = document.createElement("span");
     score.className = "cite-score";
     const value = Number(cite.score || 0);
@@ -186,6 +197,7 @@ form.addEventListener("submit", async (event) => {
     const payload = { question };
     const k = Number(kEl.value);
     if (Number.isFinite(k) && k > 0) payload.k = k;
+    if (sourceEl && sourceEl.value) payload.source = sourceEl.value;
     const response = await fetch("/ask", {
       method: "POST",
       headers: { "content-type": "application/json" },
