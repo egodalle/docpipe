@@ -11,7 +11,7 @@ Living document. Newest entry at the top.
 | Ship | 2026-11-02 (ahead of calendar) |
 | Cost cap | $25 |
 | GCP project | `docpipe-p1` (number `129492415939`) ACTIVE |
-| Cloud SQL | `docpipe-pg` **STOPPED** / `NEVER` |
+| Cloud SQL | `docpipe-pg` **STOPPED** / `NEVER` (live `/ask` proven 2026-10-27, then stopped) |
 | Cloud Run | `docpipe-api` `https://docpipe-api-gl6bq73cza-ue.a.run.app` (auth; `/` 200, `/health` 503 while SQL stopped) |
 | Local DB | 36 live docs, 188 chunks, 188 embeddings on `:5433` |
 | Model | embed `text-embedding-004` dim **768**; generate `gemini-3-flash-preview` (global) |

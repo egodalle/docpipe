@@ -37,7 +37,7 @@ def main(argv: list[str] | None = None) -> int:
     ask_p.add_argument("question", help="Question to answer from retrieved chunks")
     ask_p.add_argument("-k", type=int, default=None)
     ask_p.add_argument("--source", default=None)
-    serve = sub.add_parser("serve", help="Run FastAPI /ask /health /stats on localhost")
+    serve = sub.add_parser("serve", help="Run the demo UI plus /ask /health /stats")
     serve.add_argument("--host", default="127.0.0.1")
     serve.add_argument("--port", type=int, default=8080)
     ev = sub.add_parser("eval", help="Score recall@5 against eval/golden.json")

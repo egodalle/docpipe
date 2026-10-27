@@ -1,0 +1,338 @@
+:root {
+  --paper: #f3eee4;
+  --ink: #1c1914;
+  --muted: #6b6458;
+  --rule: #d9d0c2;
+  --card: #fffdf8;
+  --pine: #0f5c4c;
+  --pine-soft: #dceae4;
+  --rust: #8a3b12;
+  --rust-soft: #f3e4d8;
+  --wait: #8a7a3d;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+  background: var(--paper);
+  color: var(--ink);
+  font: 16px/1.5 "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+}
+
+.frame {
+  max-width: 44rem;
+  margin: 0 auto;
+  padding: 2.5rem 1.25rem 4rem;
+}
+
+.mast {
+  border-bottom: 1px solid var(--rule);
+  padding-bottom: 1.5rem;
+  margin-bottom: 1.75rem;
+}
+
+.mark {
+  margin: 0 0 0.85rem;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--pine);
+}
+
+h1 {
+  margin: 0 0 0.6rem;
+  font-size: 1.85rem;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+.lede {
+  margin: 0;
+  color: var(--muted);
+  max-width: 38rem;
+}
+
+.stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.9rem 1.5rem;
+  margin: 1.35rem 0 0;
+}
+
+.stats div {
+  margin: 0;
+  min-width: 5.5rem;
+}
+
+.stats dt {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.stats dd {
+  margin: 0.15rem 0 0;
+  font-size: 0.95rem;
+}
+
+.mono {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.78rem;
+}
+
+.pill {
+  display: inline-block;
+  padding: 0.05rem 0.45rem;
+  border-radius: 999px;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.72rem;
+}
+
+.pill.ok {
+  background: var(--pine-soft);
+  color: var(--pine);
+}
+
+.pill.down,
+.pill.err {
+  background: var(--rust-soft);
+  color: var(--rust);
+}
+
+.pill.wait {
+  background: #efe6c9;
+  color: var(--wait);
+}
+
+.field label,
+.k-field {
+  display: block;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 0.4rem;
+}
+
+textarea {
+  width: 100%;
+  resize: vertical;
+  min-height: 5.5rem;
+  padding: 0.85rem 0.95rem;
+  border: 1px solid var(--rule);
+  background: var(--card);
+  color: var(--ink);
+  font: inherit;
+  border-radius: 2px;
+}
+
+textarea:focus,
+input:focus,
+button:focus-visible {
+  outline: 2px solid var(--pine);
+  outline-offset: 1px;
+}
+
+.hint {
+  margin: 0.35rem 0 0;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin: 0.9rem 0 1.1rem;
+}
+
+.chips button {
+  border: 1px solid var(--rule);
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.88rem;
+  padding: 0.28rem 0.7rem;
+  cursor: pointer;
+  border-radius: 999px;
+}
+
+.chips button:hover,
+.chips button[aria-pressed="true"] {
+  border-color: var(--pine);
+  background: var(--pine-soft);
+}
+
+.chips button.refuse {
+  color: var(--rust);
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+button[type="submit"] {
+  background: var(--ink);
+  color: var(--paper);
+  border: 0;
+  padding: 0.65rem 1.1rem;
+  font: inherit;
+  font-size: 0.95rem;
+  cursor: pointer;
+  border-radius: 2px;
+}
+
+button[type="submit"]:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
+.k-field {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0;
+}
+
+.k-field input {
+  width: 3.2rem;
+  padding: 0.35rem 0.4rem;
+  border: 1px solid var(--rule);
+  background: var(--card);
+  font: inherit;
+}
+
+.banner {
+  margin: 1rem 0 0;
+  padding: 0.7rem 0.85rem;
+  background: var(--rust-soft);
+  color: var(--rust);
+}
+
+#result {
+  margin-top: 1.75rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--rule);
+}
+
+.result-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: baseline;
+}
+
+.verdict {
+  margin: 0;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.verdict.answered {
+  color: var(--pine);
+}
+
+.verdict.refused {
+  color: var(--rust);
+}
+
+.meta {
+  margin: 0;
+  color: var(--muted);
+}
+
+.answer {
+  margin: 0.85rem 0 1.4rem;
+  font-size: 1.05rem;
+  white-space: pre-wrap;
+}
+
+.answer code {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.88em;
+  background: #ece6da;
+  padding: 0.05em 0.28em;
+}
+
+h2 {
+  margin: 0 0 0.7rem;
+  font-size: 0.78rem;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.citations {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.citations li {
+  background: var(--card);
+  border: 1px solid var(--rule);
+  padding: 0.85rem 0.95rem 0.95rem;
+}
+
+.cite-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  align-items: baseline;
+  margin-bottom: 0.45rem;
+}
+
+.cite-file {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.82rem;
+}
+
+.cite-score {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.75rem;
+  color: var(--pine);
+}
+
+.bar {
+  height: 3px;
+  background: var(--rule);
+  margin: 0 0 0.65rem;
+}
+
+.bar span {
+  display: block;
+  height: 100%;
+  background: var(--pine);
+}
+
+.snippet {
+  margin: 0;
+  color: #3d382f;
+  font-size: 0.92rem;
+}
+
+@media (max-width: 720px) {
+  .result-head {
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+}

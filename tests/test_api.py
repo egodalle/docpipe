@@ -69,6 +69,22 @@ def api(tmp_path, monkeypatch: pytest.MonkeyPatch, db: str):
         _cleanup(prefix)
 
 
+def test_demo_page_is_served() -> None:
+    client = TestClient(app)
+    page = client.get("/")
+    assert page.status_code == 200
+    assert "text/html" in page.headers["content-type"]
+    assert "Ask the corpus" in page.text
+    css = client.get("/static/demo.css")
+    assert css.status_code == 200
+    js = client.get("/static/demo.js")
+    assert js.status_code == 200
+    meta = client.get("/api")
+    assert meta.status_code == 200
+    assert meta.json()["service"] == "docpipe"
+    assert meta.json()["ask"] == "POST /ask"
+
+
 def test_health_and_stats(api) -> None:
     client, _gen, _bq, _prefix = api
     health = client.get("/health")

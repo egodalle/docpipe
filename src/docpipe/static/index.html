@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>DocPipe · cited retrieval</title>
+    <link rel="stylesheet" href="/static/demo.css" />
+  </head>
+  <body>
+    <div class="frame">
+      <header class="mast">
+        <p class="mark">DocPipe</p>
+        <h1>Ask the corpus. Get the passage.</h1>
+        <p class="lede">
+          Local demo over Postgres + pgvector. Gemini is called only when a
+          retrieved chunk scores at least <span data-bind="refuse">0.60</span>.
+          Cloud SQL stays stopped.
+        </p>
+        <dl class="stats" id="stats" aria-live="polite">
+          <div>
+            <dt>API</dt>
+            <dd id="health-pill" class="pill wait">checking</dd>
+          </div>
+          <div>
+            <dt>Documents</dt>
+            <dd data-bind="documents">—</dd>
+          </div>
+          <div>
+            <dt>Chunks</dt>
+            <dd data-bind="chunks">—</dd>
+          </div>
+          <div>
+            <dt>Embeddings</dt>
+            <dd data-bind="embeddings">—</dd>
+          </div>
+          <div>
+            <dt>Model</dt>
+            <dd class="mono" data-bind="generation_model">—</dd>
+          </div>
+        </dl>
+      </header>
+
+      <main>
+        <form id="ask-form">
+          <div class="field">
+            <label for="question">Question</label>
+            <textarea
+              id="question"
+              name="question"
+              rows="3"
+              required
+              maxlength="2000"
+              placeholder="How does JSONB store JSON in PostgreSQL?"
+            ></textarea>
+            <p class="hint" id="char-count">0 / 2000</p>
+          </div>
+          <div class="chips" id="samples" aria-label="Sample questions"></div>
+          <div class="actions">
+            <button type="submit" id="ask-btn">Ask the corpus</button>
+            <label class="k-field">
+              k
+              <input id="k" type="number" min="1" max="20" value="5" />
+            </label>
+          </div>
+        </form>
+
+        <p class="banner" id="banner" hidden></p>
+
+        <section id="result" hidden>
+          <header class="result-head">
+            <p class="verdict" id="verdict"></p>
+            <p class="meta mono" id="result-meta"></p>
+          </header>
+          <p class="answer" id="answer"></p>
+          <h2 id="cite-heading">Citations</h2>
+          <ol class="citations" id="citations"></ol>
+        </section>
+      </main>
+    </div>
+    <script src="/static/demo.js"></script>
+  </body>
+</html>

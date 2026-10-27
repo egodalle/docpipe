@@ -74,9 +74,17 @@ Cloud Run job `docpipe-ingest` is in Terraform (`infra/run.tf`) but not created 
 Cited `/ask` against Docker `:5433`. Gemini is called only when the top score is ≥ `serve.refuse_min_score` (0.60). Cloud SQL stays **stopped**.
 
 ```bash
+unset DATABASE_URL           # if it still points at the Cloud SQL proxy
+docker compose up -d
 docpipe serve                # 127.0.0.1:8080
+```
+
+Open [http://127.0.0.1:8080](http://127.0.0.1:8080) for the demo UI. Same `/ask` as curl: cited answer, score, source file, or a refusal when nothing clears 0.60. This is a local overlay, not a product app. Do not make Cloud Run public for it.
+
+```bash
 curl -s localhost:8080/health
 curl -s localhost:8080/stats
+curl -s localhost:8080/api
 curl -s localhost:8080/ask -H 'content-type: application/json' \
   -d '{"question":"How does JSONB store JSON in PostgreSQL?"}'
 curl -s localhost:8080/ask -H 'content-type: application/json' \
@@ -127,7 +135,7 @@ terraform plan
 terraform apply
 ```
 
-Deployed: `https://docpipe-api-gl6bq73cza-ue.a.run.app` (authenticated; not public). Scales to zero (`min_instances = 0`, `max_instances = 1`). While Cloud SQL is NEVER, `GET /` is 200 and `/health` is 503. Start SQL only for a live `/ask` demo, then set NEVER again.
+Deployed: `https://docpipe-api-gl6bq73cza-ue.a.run.app` (authenticated; not public). Scales to zero (`min_instances = 0`, `max_instances = 1`). Live `/ask` against Cloud SQL was proven 2026-10-27 (JSONB cited `datatype-json.html` score 0.755), then SQL was set back to NEVER. While stopped, `GET /` is 200 and `/health` is 503. Start SQL only for a demo, then set NEVER again.
 
 Local stranger path (working without Cloud SQL):
 

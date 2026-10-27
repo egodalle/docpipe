@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Annotated
 
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from docpipe.ask import AskValidationError, ask
@@ -23,6 +25,7 @@ from docpipe.embed import EmbeddingClient, VertexEmbeddingClient
 from docpipe.generate import Generator, VertexGenerator
 from docpipe.store import connect, counts
 
+STATIC_DIR = Path(__file__).resolve().parent / "static"
 app = FastAPI(title="DocPipe", version="1.0.0")
 
 
@@ -134,7 +137,12 @@ def post_ask(
     )
 
 
-@app.get("/")
+@app.get("/", include_in_schema=False)
+def demo() -> FileResponse:
+    return FileResponse(STATIC_DIR / "index.html", media_type="text/html")
+
+
+@app.get("/api")
 def root() -> dict:
     return {
         "service": "docpipe",
@@ -144,3 +152,6 @@ def root() -> dict:
         "question_max_chars": QUESTION_MAX_CHARS,
         "k_max": K_MAX,
     }
+
+
+app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
