@@ -16,8 +16,9 @@ from docpipe.config import (
 from docpipe.embed import EmbeddingClient, VertexEmbeddingClient
 from docpipe.generate import Generator, VertexGenerator
 from docpipe.citations import citation_ok
+from docpipe.corpus import active_uri_prefix
 from docpipe.licenses import license_for_uri
-from docpipe.models import SearchHit, Source
+from docpipe.models import SearchHit, normalize_source
 from docpipe.retrieve import retrieve_hits
 from docpipe.store import connect, insert_query_log
 
@@ -92,10 +93,11 @@ def validate_ask(
     use_source: str | None = None
     if source:
         try:
-            use_source = Source(source).value
+            use_source = normalize_source(source)
         except ValueError as exc:
-            allowed = ", ".join(item.value for item in Source)
-            raise AskValidationError(f"source must be one of: {allowed}") from exc
+            raise AskValidationError(
+                "source must be a lowercase slug (a-z, 0-9, hyphen)"
+            ) from exc
     return cleaned, use_k, use_source
 
 
@@ -126,6 +128,7 @@ def ask(
             query_embedding=vector,
             k=use_k,
             source=use_source,
+            uri_prefix=active_uri_prefix(),
             hybrid=use_hybrid,
         )
         top = hits[0].score if hits else 0.0

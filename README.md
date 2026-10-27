@@ -81,6 +81,8 @@ docpipe serve                # 127.0.0.1:8080
 
 Open [http://127.0.0.1:8080](http://127.0.0.1:8080) for the demo UI. Same `/ask` as curl: cited answer, score, source file, or a refusal when nothing clears 0.60. This is a local overlay, not a product app. Do not make Cloud Run public for it.
 
+The UI **Corpus path** field (or `POST /corpus`) points ingest at another folder. A DocPipe `data/` directory with `licenses.csv` works; so does a flat or nested folder of html / markdown / text. `docpipe sync --corpus /path/to/docs` is the CLI form. Unchanged hashes skip. `/ask` searches only the active path. Disabled on Cloud Run (`K_SERVICE`). Do not upload other corpora to the P1 GCS bucket ([ADR 0009](docs/adr/0009-dynamic-corpus-path.md)).
+
 ```bash
 curl -s localhost:8080/health
 curl -s localhost:8080/stats

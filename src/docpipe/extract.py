@@ -6,7 +6,9 @@ from pathlib import Path
 
 from bs4 import BeautifulSoup
 
-from docpipe.models import ExtractResult, Source
+from docpipe.models import ExtractResult, source_value
+
+EXTRACT_SUFFIXES = {".html", ".htm", ".md", ".markdown", ".txt"}
 
 _FRONT_MATTER = re.compile(r"^---\r?\n.*?\r?\n---\r?\n", re.DOTALL)
 _MULTI_NL = re.compile(r"\n{3,}")
@@ -26,13 +28,13 @@ def extract_text(path: Path) -> str:
     raise ValueError(f"unsupported extract type: {path.suffix}")
 
 
-def extract_file(path: Path, source: Source, uri: str) -> ExtractResult:
+def extract_file(path: Path, source: str, uri: str) -> ExtractResult:
     original_bytes = path.stat().st_size
     text = extract_text(path)
     empty = len(text.strip()) == 0
     return ExtractResult(
         uri=uri,
-        source=source,
+        source=source_value(source),
         text=text,
         content_hash=sha256_text(text),
         bytes=original_bytes,

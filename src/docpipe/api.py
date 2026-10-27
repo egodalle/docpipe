@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import threading
 from pathlib import Path
 from typing import Annotated
 
@@ -22,9 +23,21 @@ from docpipe.config import (
     QUESTION_MAX_CHARS,
     REFUSE_MIN_SCORE,
 )
+from docpipe.corpus import (
+    CorpusError,
+    corpus_status,
+    corpus_switch_allowed,
+    discover_corpus,
+    set_active_corpus,
+    active_uri_prefix,
+)
 from docpipe.embed import EmbeddingClient, VertexEmbeddingClient
 from docpipe.generate import Generator, VertexGenerator
+from docpipe.ingest import EmptyExtractRateError
 from docpipe.store import apply_hybrid_schema, connect, counts, query_log_metrics
+from docpipe.sync import sync_corpus
+
+_CORPUS_LOCK = threading.Lock()
 
 STATIC_DIR = Path(__file__).resolve().parent / "static"
 app = FastAPI(title="DocPipe", version="1.0.0")
@@ -54,6 +67,11 @@ class AskResponse(BaseModel):
     latency_ms: int
     retrieval_mode: str = "vector"
     citation_ok: bool | None = None
+
+
+class CorpusRequest(BaseModel):
+    path: str = Field(min_length=1, max_length=1024)
+    sync: bool = True
 
 
 def get_embedding_client() -> EmbeddingClient:
@@ -88,7 +106,7 @@ def stats() -> dict:
     try:
         with connect() as conn:
             apply_hybrid_schema(conn)
-            payload = counts(conn)
+            payload = counts(conn, uri_prefix=active_uri_prefix())
             payload.update(query_log_metrics(conn))
     except Exception:
         raise HTTPException(status_code=503, detail="database unavailable")
@@ -103,7 +121,64 @@ def stats() -> dict:
             "retrieval_mode": "hybrid" if HYBRID_RETRIEVAL else "vector",
         }
     )
+    payload.update(corpus_status())
     return payload
+
+
+@app.get("/corpus")
+def get_corpus() -> dict:
+    return corpus_status()
+
+
+@app.post("/corpus")
+def post_corpus(
+    body: CorpusRequest,
+    embedding_client: Annotated[EmbeddingClient, Depends(get_embedding_client)],
+) -> dict:
+    if not corpus_switch_allowed():
+        raise HTTPException(
+            status_code=403,
+            detail="corpus switch is local-only; unset K_SERVICE / DOCS_ALLOW_CORPUS_SWITCH",
+        )
+    if not _CORPUS_LOCK.acquire(blocking=False):
+        raise HTTPException(status_code=409, detail="corpus index already running")
+    try:
+        try:
+            corpus = discover_corpus(body.path)
+        except CorpusError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        set_active_corpus(corpus)
+        sync_payload = None
+        if body.sync:
+            try:
+                report = sync_corpus(corpus=corpus, embedding_client=embedding_client)
+            except EmptyExtractRateError as exc:
+                raise HTTPException(status_code=400, detail=str(exc)) from exc
+            except FileNotFoundError as exc:
+                raise HTTPException(status_code=400, detail=str(exc)) from exc
+            except Exception as exc:
+                raise HTTPException(status_code=503, detail=f"index failed: {exc}") from exc
+            sync_payload = {
+                "inserted": report.ingest.inserted,
+                "updated": report.ingest.updated,
+                "skipped": report.ingest.skipped,
+                "tombstoned": report.ingest.tombstoned,
+                "quarantined": report.ingest.quarantined,
+                "chunked": report.index.chunked,
+                "embedded": report.index.embedded,
+                "index_skipped": report.index.skipped,
+            }
+        payload = corpus_status(corpus)
+        if sync_payload is not None:
+            payload["sync"] = sync_payload
+        try:
+            with connect() as conn:
+                payload.update(counts(conn, uri_prefix=corpus.uri_prefix))
+        except Exception:
+            pass
+        return payload
+    finally:
+        _CORPUS_LOCK.release()
 
 
 @app.post("/ask", response_model=AskResponse)
@@ -162,6 +237,7 @@ def root() -> dict:
         "ask": "POST /ask",
         "health": "GET /health",
         "stats": "GET /stats",
+        "corpus": "GET/POST /corpus",
         "question_max_chars": QUESTION_MAX_CHARS,
         "k_max": K_MAX,
     }

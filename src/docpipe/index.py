@@ -10,10 +10,11 @@ from docpipe.config import (
     EMBEDDING_MODEL,
     RAW_DIR,
 )
+from docpipe.corpus import Corpus, peek_active_corpus
 from docpipe.embed import EmbeddingClient, VertexEmbeddingClient
 from docpipe.extract import extract_file
 from docpipe.licenses import load_licenses
-from docpipe.models import LicenseRow
+from docpipe.models import LicenseRow, source_value
 from docpipe.quality import QualityError, assert_index_quality
 from docpipe.store import (
     apply_d3_schema,
@@ -50,15 +51,15 @@ class IndexReport:
 def chunk_corpus(
     raw_dir: Path | None = None,
     database_url: str | None = None,
+    corpus: Corpus | None = None,
 ) -> IndexReport:
-    raw = raw_dir or RAW_DIR
+    pairs = _index_pairs(raw_dir, corpus)
     report = IndexReport()
-    rows = load_licenses()
     with connect(database_url) as conn:
         apply_d3_schema(conn)
         apply_hybrid_schema(conn)
-        for row in rows:
-            _chunk_one(conn, row, raw, report)
+        for row, path in pairs:
+            _chunk_one(conn, row, path, report)
         totals = counts(conn)
         report.documents = totals["documents"]
         report.chunks = totals["chunks"]
@@ -91,17 +92,17 @@ def index_corpus(
     raw_dir: Path | None = None,
     database_url: str | None = None,
     embedding_client: EmbeddingClient | None = None,
+    corpus: Corpus | None = None,
 ) -> IndexReport:
-    raw = raw_dir or RAW_DIR
+    pairs = _index_pairs(raw_dir, corpus)
     client = embedding_client or VertexEmbeddingClient()
     _assert_client_dim(client)
     report = IndexReport(model=client.model_name, dim=client.dim)
-    rows = load_licenses()
     with connect(database_url) as conn:
         apply_d3_schema(conn)
         apply_hybrid_schema(conn)
-        for row in rows:
-            _chunk_one(conn, row, raw, report)
+        for row, path in pairs:
+            _chunk_one(conn, row, path, report)
         pending = chunks_missing_embeddings(conn, model=client.model_name)
         _embed_pending(conn, client, pending, report)
         totals = counts(conn)
@@ -112,13 +113,25 @@ def index_corpus(
     return report
 
 
+def _index_pairs(
+    raw_dir: Path | None,
+    corpus: Corpus | None,
+) -> list[tuple[LicenseRow, Path]]:
+    if corpus is not None:
+        return list(corpus.files)
+    active = peek_active_corpus()
+    if raw_dir is None and active is not None:
+        return list(active.files)
+    raw = raw_dir or RAW_DIR
+    return [(row, raw / source_value(row.source) / row.file) for row in load_licenses()]
+
+
 def _chunk_one(
     conn,
     row: LicenseRow,
-    raw: Path,
+    path: Path,
     report: IndexReport,
 ) -> None:
-    path = raw / row.source.value / row.file
     if not path.exists():
         raise FileNotFoundError(f"missing corpus file {path}; run `docpipe fetch`")
     uri = path.resolve().as_uri()
@@ -131,7 +144,8 @@ def _chunk_one(
         return
     if document_has_chunks(conn, document_id):
         return
-    result = extract_file(path, row.source, uri)
+    source = source_value(row.source)
+    result = extract_file(path, source, uri)
     if result.empty:
         raise EmptyChunkError(f"empty extract for live document {uri}")
     if result.content_hash != content_hash:
@@ -140,7 +154,7 @@ def _chunk_one(
         )
     drafts = chunk_text(
         result.text,
-        metadata={"source": row.source.value, "uri": uri},
+        metadata={"source": source, "uri": uri},
     )
     _assert_drafts(drafts, uri)
     inserted = insert_chunks(conn, document_id, drafts)

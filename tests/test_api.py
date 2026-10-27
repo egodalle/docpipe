@@ -164,9 +164,21 @@ def test_invalid_source_is_rejected(api) -> None:
     client, _gen, _bq, _prefix = api
     response = client.post(
         "/ask",
-        json={"question": "What is JSONB?", "source": "wikipedia"},
+        json={"question": "What is JSONB?", "source": "not a slug"},
     )
     assert response.status_code == 422
+
+
+def test_corpus_endpoints_are_documented() -> None:
+    client = TestClient(app)
+    meta = client.get("/api")
+    assert meta.status_code == 200
+    assert "corpus" in meta.json()
+    listed = client.get("/corpus")
+    assert listed.status_code == 200
+    assert "switch_allowed" in listed.json()
+    page = client.get("/")
+    assert "Corpus path" in page.text
 
 
 def test_validate_ask_bounds() -> None:
