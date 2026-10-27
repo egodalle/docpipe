@@ -1,0 +1,12 @@
+.venv
+.terraform
+infra/.terraform
+infra/*.tfstate*
+infra/tfplan
+infra/terraform.tfvars
+data/raw
+data/quarantine
+**/__pycache__
+.pytest_cache
+*.egg-info
+.git

@@ -33,3 +33,11 @@ output "api_sa" {
 output "database_url_secret" {
   value = google_secret_manager_secret.database_url.name
 }
+
+output "artifact_registry" {
+  value = "${var.region}-docker.pkg.dev/${var.project_id}/${google_artifact_registry_repository.docpipe.repository_id}"
+}
+
+output "ingest_job" {
+  value = try(google_cloud_run_v2_job.ingest[0].name, "not-created (set ingest_image)")
+}

@@ -1,12 +1,20 @@
 from __future__ import annotations
 
 from contextlib import contextmanager
-from typing import Iterator
+from typing import Iterator, Sequence
+from uuid import UUID
 
 import psycopg
 
-from docpipe.config import DATABASE_URL
-from docpipe.models import ExtractResult, Status
+from docpipe.config import (
+    CHUNK_STRATEGY,
+    DATABASE_URL,
+    EMBEDDING_DIM,
+    EMBEDDING_MODEL,
+    SQL_DIR,
+)
+from docpipe.chunker import ChunkDraft
+from docpipe.models import ExtractResult, SearchHit, Status
 
 
 @contextmanager
@@ -32,6 +40,22 @@ def live_by_uri(conn: psycopg.Connection, uri: str) -> tuple[str, str] | None:
     return str(row[0]), str(row[1])
 
 
+def list_live_documents(conn: psycopg.Connection) -> list[tuple[str, str, str]]:
+    rows = conn.execute(
+        "SELECT id::text, uri, content_hash FROM documents WHERE status = 'live'"
+    ).fetchall()
+    return [(str(row[0]), str(row[1]), str(row[2])) for row in rows]
+
+
+def tombstone_document(conn: psycopg.Connection, document_id: str) -> None:
+    """Mark live→tombstoned and drop chunks/embeddings (FK cascade from chunks)."""
+    conn.execute("DELETE FROM chunks WHERE document_id = %s::uuid", (document_id,))
+    conn.execute(
+        "UPDATE documents SET status = 'tombstoned' WHERE id = %s::uuid AND status = 'live'",
+        (document_id,),
+    )
+
+
 def insert_document(conn: psycopg.Connection, result: ExtractResult, status: Status) -> str:
     row = conn.execute(
         """
@@ -50,3 +74,235 @@ def insert_document(conn: psycopg.Connection, result: ExtractResult, status: Sta
     ).fetchone()
     assert row is not None
     return str(row[0])
+
+
+def apply_d3_schema(conn: psycopg.Connection) -> None:
+    script = (SQL_DIR / "002_hnsw.sql").read_text(encoding="utf-8")
+    for statement in _sql_statements(script):
+        conn.execute(statement)
+
+
+def document_is_indexed(
+    conn: psycopg.Connection,
+    document_id: str,
+    strategy: str = CHUNK_STRATEGY,
+    model: str = EMBEDDING_MODEL,
+) -> bool:
+    row = conn.execute(
+        """
+        SELECT
+            EXISTS (
+                SELECT 1 FROM chunks
+                WHERE document_id = %s::uuid AND strategy = %s
+            ) AS has_chunks,
+            EXISTS (
+                SELECT 1 FROM chunks c
+                LEFT JOIN embeddings e
+                    ON e.chunk_id = c.id AND e.model = %s
+                WHERE c.document_id = %s::uuid
+                  AND c.strategy = %s
+                  AND e.chunk_id IS NULL
+            ) AS missing_embeddings
+        """,
+        (document_id, strategy, model, document_id, strategy),
+    ).fetchone()
+    if row is None:
+        return False
+    has_chunks, missing_embeddings = bool(row[0]), bool(row[1])
+    return has_chunks and not missing_embeddings
+
+
+def document_has_chunks(
+    conn: psycopg.Connection,
+    document_id: str,
+    strategy: str = CHUNK_STRATEGY,
+) -> bool:
+    row = conn.execute(
+        "SELECT EXISTS (SELECT 1 FROM chunks WHERE document_id = %s::uuid AND strategy = %s)",
+        (document_id, strategy),
+    ).fetchone()
+    return bool(row and row[0])
+
+
+def insert_chunks(
+    conn: psycopg.Connection,
+    document_id: str,
+    drafts: Sequence[ChunkDraft],
+) -> list[str]:
+    ids: list[str] = []
+    for draft in drafts:
+        row = conn.execute(
+            """
+            INSERT INTO chunks (document_id, ordinal, body, token_count, strategy, metadata)
+            VALUES (%s::uuid, %s, %s, %s, %s, %s::jsonb)
+            RETURNING id::text
+            """,
+            (
+                document_id,
+                draft.ordinal,
+                draft.body,
+                draft.token_count,
+                draft.strategy,
+                _json(draft.metadata or {}),
+            ),
+        ).fetchone()
+        assert row is not None
+        ids.append(str(row[0]))
+    return ids
+
+
+def chunks_missing_embeddings(
+    conn: psycopg.Connection,
+    model: str = EMBEDDING_MODEL,
+) -> list[tuple[str, str]]:
+    rows = conn.execute(
+        """
+        SELECT c.id::text, c.body
+        FROM chunks c
+        JOIN documents d ON d.id = c.document_id
+        LEFT JOIN embeddings e ON e.chunk_id = c.id AND e.model = %s
+        WHERE d.status = 'live' AND e.chunk_id IS NULL
+        ORDER BY d.ingested_at, c.ordinal
+        """,
+        (model,),
+    ).fetchall()
+    return [(str(row[0]), str(row[1])) for row in rows]
+
+
+def insert_embedding(
+    conn: psycopg.Connection,
+    chunk_id: str,
+    vector: Sequence[float],
+    model: str = EMBEDDING_MODEL,
+    dim: int = EMBEDDING_DIM,
+) -> None:
+    conn.execute(
+        """
+        INSERT INTO embeddings (chunk_id, embedding, model, dim)
+        VALUES (%s::uuid, %s::vector, %s, %s)
+        ON CONFLICT (chunk_id) DO NOTHING
+        """,
+        (chunk_id, _vector_literal(vector), model, dim),
+    )
+
+
+def search_chunks(
+    conn: psycopg.Connection,
+    query_embedding: Sequence[float],
+    k: int = 5,
+) -> list[SearchHit]:
+    if k <= 0:
+        raise ValueError("k must be > 0")
+    rows = conn.execute(
+        "SELECT chunk_id, document_id, uri, source, ordinal, body, score "
+        "FROM search_chunks(%s::vector, %s)",
+        (_vector_literal(query_embedding), k),
+    ).fetchall()
+    hits: list[SearchHit] = []
+    for row in rows:
+        hits.append(
+            SearchHit(
+                chunk_id=_as_text(row[0]),
+                document_id=_as_text(row[1]),
+                uri=str(row[2]),
+                source=str(row[3]),
+                ordinal=int(row[4]),
+                body=str(row[5]),
+                score=float(row[6]),
+            )
+        )
+    return hits
+
+
+def insert_query_log(
+    conn: psycopg.Connection,
+    *,
+    request_id: str,
+    question: str,
+    chunk_ids: Sequence[str],
+    scores: Sequence[float],
+    latency_ms: int,
+    model: str,
+    refused: bool = False,
+) -> None:
+    conn.execute(
+        """
+        INSERT INTO query_logs (
+            request_id, question, chunk_ids, scores, answer, refused, latency_ms, model
+        )
+        VALUES (%s, %s, %s::uuid[], %s, NULL, %s, %s, %s)
+        """,
+        (
+            request_id,
+            question,
+            [UUID(value) for value in chunk_ids],
+            list(scores),
+            refused,
+            latency_ms,
+            model,
+        ),
+    )
+
+
+def counts(conn: psycopg.Connection) -> dict[str, int]:
+    row = conn.execute(
+        """
+        SELECT
+            (SELECT count(*) FROM documents WHERE status = 'live') AS documents,
+            (SELECT count(*) FROM chunks) AS chunks,
+            (SELECT count(*) FROM embeddings) AS embeddings
+        """
+    ).fetchone()
+    assert row is not None
+    return {
+        "documents": int(row[0]),
+        "chunks": int(row[1]),
+        "embeddings": int(row[2]),
+    }
+
+
+def _vector_literal(vector: Sequence[float]) -> str:
+    return "[" + ",".join(repr(float(value)) for value in vector) + "]"
+
+
+def _json(value: object) -> str:
+    import json
+
+    return json.dumps(value)
+
+
+def _as_text(value: object) -> str:
+    if isinstance(value, UUID):
+        return str(value)
+    return str(value)
+
+
+def _sql_statements(script: str) -> list[str]:
+    statements: list[str] = []
+    buf: list[str] = []
+    index = 0
+    while index < len(script):
+        if script.startswith("$$", index):
+            end = script.find("$$", index + 2)
+            if end < 0:
+                raise ValueError("unterminated dollar quote in SQL")
+            buf.append(script[index : end + 2])
+            index = end + 2
+            continue
+        char = script[index]
+        if char == ";":
+            stmt = "".join(buf).strip()
+            if stmt and not all(
+                line.strip().startswith("--") or not line.strip()
+                for line in stmt.splitlines()
+            ):
+                statements.append(stmt)
+            buf = []
+            index += 1
+            continue
+        buf.append(char)
+        index += 1
+    tail = "".join(buf).strip()
+    if tail:
+        statements.append(tail)
+    return statements

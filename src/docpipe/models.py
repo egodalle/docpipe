@@ -39,3 +39,13 @@ class ExtractResult(BaseModel):
     bytes: int = Field(ge=0)
     char_count: int = Field(ge=0)
     empty: bool
+
+
+class SearchHit(BaseModel):
+    chunk_id: str
+    document_id: str
+    uri: str
+    source: str
+    ordinal: int
+    body: str
+    score: float

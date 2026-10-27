@@ -16,6 +16,17 @@ Embeddings and generation must be same-project, billed to GCP, and frozen so eva
 
 Exact model IDs are pinned in week 3 when we first embed (record the ID in config and in this ADR as an amendment note). Until then the placeholder is `text-embedding-004` and `gemini-2.0-flash` (or the current Flash alias).
 
+## Amendment 2026-10-26 (D3)
+
+Pinned in `config.yaml` and live Vertex (`docpipe-p1`, `us-east1`):
+
+| Role | ID | Dim |
+| --- | --- | --- |
+| Embeddings (chunks + queries) | `text-embedding-004` | **768** |
+| Generation (unused until D5) | `gemini-2.0-flash` | — |
+
+Live probe returned dim 768, matching `sql/001_init.sql` `vector(768)` / `CHECK (dim = 768)`. No ALTER. Changing the model or dim requires a new amendment and a schema migration.
+
 ## Consequences
 
 - **Good:** One IAM surface (Vertex user); cost is small if we cache embeddings by chunk hash.

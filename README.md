@@ -44,4 +44,29 @@ pytest
 
 `data/licenses.csv` is the redistributable manifest (PostgreSQL / MIT). Empty extracts go to `data/quarantine/` and fail the job if the rate is ≥ 5%. Cloud SQL stays **stopped**.
 
+## Local chunk + embed (D3)
+
+Frozen model: Vertex `text-embedding-004`, dim **768** (`config.yaml`, ADR 0003). Same IDs locally and on GCP. Cloud SQL stays **stopped**; embeddings write to Docker `:5433`.
+
+```bash
+docpipe index              # chunk recursive_400_80 + batch embed + HNSW
+docpipe index              # second run skips known content hashes
+docpipe search --examples  # five k-NN queries, logged without an LLM answer
+docpipe search "What is JSONB?"
+pytest
+```
+
+`docpipe chunk` and `docpipe embed` exist if you need the steps split. Skip re-embed when a live `content_hash` already has chunks + embeddings.
+
+## Incremental sync (D4)
+
+Edit one file and only that document is re-chunked/re-embedded. Missing files are tombstoned (chunks dropped).
+
+```bash
+docpipe sync               # ingest insert/update/tombstone + index
+pytest
+```
+
+Cloud Run job `docpipe-ingest` is in Terraform (`infra/run.tf`) but not created until `ingest_image` is set. Do not run it while Cloud SQL is stopped.
+
 SQL primer notes: [notes/day2-sql.md](notes/day2-sql.md). Queries: [sql/practice.sql](sql/practice.sql).

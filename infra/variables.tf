@@ -41,3 +41,9 @@ variable "operator_ip_cidr" {
   description = "Your public IP /32 for Cloud SQL authorized networks. 0.0.0.0/0 is allowed only for short demos."
   default     = "127.0.0.1/32"
 }
+
+variable "ingest_image" {
+  type        = string
+  description = "Container image for the Cloud Run ingest job. Empty skips creating the job until you push to Artifact Registry."
+  default     = ""
+}

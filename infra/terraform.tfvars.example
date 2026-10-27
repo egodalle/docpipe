@@ -5,3 +5,4 @@ budget_amount_usd            = 25
 budget_email                 = "you@example.com"
 cloud_sql_activation_policy  = "NEVER"
 operator_ip_cidr             = "127.0.0.1/32"
+ingest_image                 = ""  # set after: docker push us-east1-docker.pkg.dev/PROJECT/docpipe/ingest:tag

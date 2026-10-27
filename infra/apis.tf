@@ -9,6 +9,7 @@ resource "google_project_service" "required" {
     "sqladmin.googleapis.com",
     "storage.googleapis.com",
     "run.googleapis.com",
+    "artifactregistry.googleapis.com",
     "aiplatform.googleapis.com",
     "secretmanager.googleapis.com",
     "bigquery.googleapis.com",

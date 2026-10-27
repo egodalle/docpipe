@@ -1,0 +1,15 @@
+# Frozen P1 model IDs. Changing these requires an ADR 0003 amendment
+# and, if dim changes, ALTER TABLE embeddings plus sql/001_init.sql.
+embedding:
+  model: text-embedding-004
+  dim: 768
+  batch_size: 12
+generation:
+  model: gemini-2.0-flash
+chunk:
+  strategy: recursive_400_80
+  size: 400
+  overlap: 80
+gcp:
+  project: docpipe-p1
+  location: us-east1

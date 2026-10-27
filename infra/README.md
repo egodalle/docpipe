@@ -18,4 +18,12 @@ cloud_sql_activation_policy = "ALWAYS"
 
 Then set it back to `NEVER` and apply. Do not leave ALWAYS on overnight — that is how you spend the $25 cap.
 
-Cloud Run job/service come in D4/D7; this stack is D1 foundations.
+Cloud Run **job** `docpipe-ingest` is defined in `run.tf` but not created until `ingest_image` is set (image must exist in Artifact Registry). SQL stays **stopped** unless you are working.
+
+```bash
+# after docker build/push
+ingest_image = "us-east1-docker.pkg.dev/docpipe-p1/docpipe/ingest:d4"
+terraform apply
+```
+
+Do not execute the job while Cloud SQL is NEVER — the job cannot reach a stopped instance.
