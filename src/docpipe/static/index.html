@@ -12,9 +12,9 @@
         <p class="mark">DocPipe</p>
         <h1>Ask the corpus. Get the passage.</h1>
         <p class="lede">
-          Local demo over Postgres + pgvector. Gemini is called only when a
-          retrieved chunk scores at least <span data-bind="refuse">0.60</span>.
-          Cloud SQL stays stopped.
+          Local demo over Postgres + pgvector. Hybrid retrieval (vector +
+          lexical RRF). Gemini is called only when a retrieved chunk scores at
+          least <span data-bind="refuse">0.60</span>. Cloud SQL stays stopped.
         </p>
         <dl class="stats" id="stats" aria-live="polite">
           <div>
@@ -30,12 +30,16 @@
             <dd data-bind="chunks">—</dd>
           </div>
           <div>
-            <dt>Embeddings</dt>
-            <dd data-bind="embeddings">—</dd>
+            <dt>Retrieval</dt>
+            <dd data-bind="retrieval_mode">—</dd>
           </div>
           <div>
-            <dt>Model</dt>
-            <dd class="mono" data-bind="generation_model">—</dd>
+            <dt>Refuse rate</dt>
+            <dd data-bind="refuse_rate">—</dd>
+          </div>
+          <div>
+            <dt>p50</dt>
+            <dd data-bind="latency_p50_ms">—</dd>
           </div>
         </dl>
       </header>
@@ -60,6 +64,14 @@
             <label class="k-field">
               k
               <input id="k" type="number" min="1" max="20" value="5" />
+            </label>
+            <label class="k-field" for="source">
+              source
+              <select id="source">
+                <option value="">all</option>
+                <option value="postgres-docs">postgres-docs</option>
+                <option value="pgvector">pgvector</option>
+              </select>
             </label>
           </div>
         </form>

@@ -117,6 +117,7 @@ def test_run_eval_scores_seeded_docs(
     try:
         report = run_eval(
             unique_documents=False,
+            hybrid=False,
             k=5,
             database_url=db,
             embedding_client=embedder,

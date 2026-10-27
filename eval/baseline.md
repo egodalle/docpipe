@@ -27,4 +27,9 @@ The only raw miss was `mvcc` — thin extract, top-5 filled with `README.md`. Un
 ```bash
 docpipe eval --compare --no-persist
 docpipe eval --unique-documents --seed-ingest-run
+docpipe eval --compare-hybrid --no-persist
 ```
+
+## Hybrid (post-v1.0)
+
+Second tune: unique-document **vector** vs unique-document **hybrid RRF**. Cosine remains the refuse score. See [ADR 0007](../docs/adr/0007-hybrid-rrf.md). Run `--compare-hybrid` to fill this table on the live corpus.

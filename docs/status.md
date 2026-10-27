@@ -6,7 +6,7 @@ Living document. Newest entry at the top.
 
 | Field | Value |
 | --- | --- |
-| Phase | **D7 / M7 v1.0 shipped.** |
+| Phase | **D7 / M7 v1.0 shipped.** Post-v1.0: hybrid RRF on `feat/hybrid-retrieval-ops`. |
 | Date | 2026-10-27 |
 | Ship | 2026-11-02 (ahead of calendar) |
 | Cost cap | $25 |
@@ -15,11 +15,18 @@ Living document. Newest entry at the top.
 | Cloud Run | `docpipe-api` `https://docpipe-api-gl6bq73cza-ue.a.run.app` (auth; `/` 200, `/health` 503 while SQL stopped) |
 | Local DB | 36 live docs, 188 chunks, 188 embeddings on `:5433` |
 | Model | embed `text-embedding-004` dim **768**; generate `gemini-3-flash-preview` (global) |
-| Index | `embeddings_hnsw` (cosine) + unique-document collapse (`pool_k=15`) |
+| Index | `embeddings_hnsw` (cosine) + unique-document collapse (`pool_k=15`) + hybrid RRF (`body_tsv`) |
 | Eval | recall@5 **1.000** (28/28 unique docs) vs 0.964 raw; Dataform 4/4 green |
 | API | local `:8080` and Cloud Run (SQL stopped ⇒ `/health` 503) |
 | Blocker | None |
 | Next | Leave SQL stopped. Spend stays under $25. |
+
+## 2026-10-27 — hybrid retrieval + operator stats (feature branch)
+
+- `sql/003_hybrid.sql`: `chunks.body_tsv` GIN + RRF with HNSW. Citation score stays cosine (refuse floor unchanged).
+- `/stats`: `asks`, `refused`, `refuse_rate`, `latency_p50_ms`, `latency_p95_ms`. Citations carry `source` and `license`.
+- `docpipe eval --compare-hybrid`. Demo UI shows retrieval mode, refuse rate, source filter.
+- Cloud SQL not used.
 
 ## 2026-10-27 night — M7 v1.0 ship (ahead of calendar)
 

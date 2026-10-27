@@ -53,6 +53,8 @@ class AppConfig:
     max_context_chars: int
     unique_documents: bool
     eval_pool_k: int
+    hybrid_retrieval: bool
+    rrf_k: int
     chunk_strategy: str
     chunk_size: int
     chunk_overlap: int
@@ -69,6 +71,7 @@ def load_config() -> AppConfig:
     generation = raw.get("generation") or {}
     serve = raw.get("serve") or {}
     evaluation = raw.get("eval") or {}
+    retrieval = raw.get("retrieval") or {}
     dim = int(embedding["dim"])
     if dim != SQL_DIM:
         raise ValueError(
@@ -88,6 +91,8 @@ def load_config() -> AppConfig:
         max_context_chars=int(serve.get("max_context_chars") or 6000),
         unique_documents=bool(evaluation.get("unique_documents") or False),
         eval_pool_k=int(evaluation.get("pool_k") or 15),
+        hybrid_retrieval=bool(retrieval.get("hybrid", True)),
+        rrf_k=int(retrieval.get("rrf_k") or 60),
         chunk_strategy=str(chunk["strategy"]),
         chunk_size=int(chunk["size"]),
         chunk_overlap=int(chunk["overlap"]),
@@ -109,6 +114,8 @@ K_MAX = _CFG.k_max
 MAX_CONTEXT_CHARS = _CFG.max_context_chars
 UNIQUE_DOCUMENTS = _CFG.unique_documents
 EVAL_POOL_K = _CFG.eval_pool_k
+HYBRID_RETRIEVAL = _CFG.hybrid_retrieval
+RRF_K = _CFG.rrf_k
 CHUNK_STRATEGY = _CFG.chunk_strategy
 CHUNK_SIZE = _CFG.chunk_size
 CHUNK_OVERLAP = _CFG.chunk_overlap

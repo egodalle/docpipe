@@ -17,6 +17,7 @@ from docpipe.models import LicenseRow
 from docpipe.quality import QualityError, assert_index_quality
 from docpipe.store import (
     apply_d3_schema,
+    apply_hybrid_schema,
     chunks_missing_embeddings,
     connect,
     counts,
@@ -55,6 +56,7 @@ def chunk_corpus(
     rows = load_licenses()
     with connect(database_url) as conn:
         apply_d3_schema(conn)
+        apply_hybrid_schema(conn)
         for row in rows:
             _chunk_one(conn, row, raw, report)
         totals = counts(conn)
@@ -74,6 +76,7 @@ def embed_corpus(
     report = IndexReport(model=client.model_name, dim=client.dim)
     with connect(database_url) as conn:
         apply_d3_schema(conn)
+        apply_hybrid_schema(conn)
         pending = chunks_missing_embeddings(conn, model=client.model_name)
         _embed_pending(conn, client, pending, report)
         totals = counts(conn)
@@ -96,6 +99,7 @@ def index_corpus(
     rows = load_licenses()
     with connect(database_url) as conn:
         apply_d3_schema(conn)
+        apply_hybrid_schema(conn)
         for row in rows:
             _chunk_one(conn, row, raw, report)
         pending = chunks_missing_embeddings(conn, model=client.model_name)

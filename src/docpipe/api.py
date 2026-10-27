@@ -16,6 +16,7 @@ from docpipe.config import (
     EMBEDDING_DIM,
     EMBEDDING_MODEL,
     GENERATION_MODEL,
+    HYBRID_RETRIEVAL,
     K_DEFAULT,
     K_MAX,
     QUESTION_MAX_CHARS,
@@ -23,7 +24,7 @@ from docpipe.config import (
 )
 from docpipe.embed import EmbeddingClient, VertexEmbeddingClient
 from docpipe.generate import Generator, VertexGenerator
-from docpipe.store import connect, counts
+from docpipe.store import apply_hybrid_schema, connect, counts, query_log_metrics
 
 STATIC_DIR = Path(__file__).resolve().parent / "static"
 app = FastAPI(title="DocPipe", version="1.0.0")
@@ -41,6 +42,8 @@ class CitationOut(BaseModel):
     chunk_id: str
     snippet: str
     score: float
+    source: str = ""
+    license: str | None = None
 
 
 class AskResponse(BaseModel):
@@ -49,6 +52,7 @@ class AskResponse(BaseModel):
     refused: bool
     citations: list[CitationOut]
     latency_ms: int
+    retrieval_mode: str = "vector"
 
 
 def get_embedding_client() -> EmbeddingClient:
@@ -82,7 +86,9 @@ def health() -> dict:
 def stats() -> dict:
     try:
         with connect() as conn:
+            apply_hybrid_schema(conn)
             payload = counts(conn)
+            payload.update(query_log_metrics(conn))
     except Exception:
         raise HTTPException(status_code=503, detail="database unavailable")
     payload.update(
@@ -92,6 +98,8 @@ def stats() -> dict:
             "generation_model": GENERATION_MODEL,
             "refuse_min_score": REFUSE_MIN_SCORE,
             "k_default": K_DEFAULT,
+            "hybrid": HYBRID_RETRIEVAL,
+            "retrieval_mode": "hybrid" if HYBRID_RETRIEVAL else "vector",
         }
     )
     return payload
@@ -130,10 +138,13 @@ def post_ask(
                 chunk_id=item.chunk_id,
                 snippet=item.snippet,
                 score=item.score,
+                source=item.source,
+                license=item.license,
             )
             for item in result.citations
         ],
         latency_ms=result.latency_ms,
+        retrieval_mode=result.retrieval_mode,
     )
 
 
