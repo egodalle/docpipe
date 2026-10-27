@@ -1,115 +1,110 @@
-# Delivery plan — DocPipe P1 v1.0
+# Delivery plan — DocPipe P1 v1.0 (7-day sprint)
 
 | Field | Value |
 | --- | --- |
 | Document | DOC-004 |
-| Version | 1.0 |
+| Version | 1.1 |
 | Status | Approved |
 | Date | 2026-10-26 |
 | Calendar | [timeline.md](timeline.md) |
+| Supersedes | v1.0 six-week WBS |
 
 ## 1. RACI
 
-Solo project, still named.
-
-| Activity | Engineer (Ed) | Sponsor (Ed / career) | Hiring-manager reader |
-| --- | --- | --- | --- |
-| Charter / ADRs | A/R | C | I |
-| Terraform / IAM | R | A (cost cap) | I |
-| Pipeline + tests | R | I | I |
-| Eval numbers | R | A (ship gate) | C (must be in README) |
-| Public repo + demo | R | A | C |
-
-R = responsible, A = accountable, C = consulted, I = informed.
+Unchanged: Ed is R/A on engineering, cost, and ship.
 
 ## 2. Cadence
 
-- **Capacity:** 10–12 hours/week, six weeks (~70 hours). If a week slips, cut the week-5 hybrid-search stretch before cutting eval.
-- **Stand-up:** update [status.md](status.md) at the end of each week (blockers, hours, metric).
-- **Change control:** stack changes need an ADR; metric slips go in [raid.md](raid.md).
+- **Window:** 2026-10-26 → 2026-11-02.
+- **Hours:** unlimited. Still cut scope rather than silent overtime on hybrid search.
+- **Stand-up:** update [status.md](status.md) at the end of each day.
+- **Cost:** $25 cap; budget alerts at $10 and $20; stop Cloud SQL when idle.
 
-## 3. Work breakdown
+## 3. Work breakdown (days)
 
-Hours are estimates, not commitments.
+### D1 — Foundations + Terraform · 2026-10-26 / 27
 
-### Week 1 — Foundations (12h) · 2026-10-26 → 2026-11-01
+| ID | Work | Done when |
+| --- | --- | --- |
+| D1-1 | Charter v1.1, ADRs 0005–0006 | This pack in git |
+| D1-2 | Terraform: APIs, GCS, Secret Manager, SAs, BQ, Dataform IAM, $25 budget | `terraform plan` clean |
+| D1-3 | Cloud SQL `db-f1-micro` + pgvector, **stopped** | Instance exists, not billing CPU |
+| D1-4 | `sql/001_init.sql` + local `docker compose` pgvector | Five tables on :5433 |
 
-| ID | Work | Hours | Done when |
-| --- | --- | --- | --- |
-| W1-0 | Kickoff docs (this pack) | 3 | Charter, ADRs, plan in git |
-| W1-1 | GCP project `docpipe-p1`, APIs, billing budget alert $50 | 2 | Project exists; budget alert on |
-| W1-2 | Terraform skeleton: project services, GCS, Secret Manager, SA | 4 | `terraform plan` clean |
-| W1-3 | Cloud SQL Postgres 16 + pgvector; `sql/001_init.sql` | 3 | `\dt` shows five tables |
+**Milestone M1:** Schema local + GCP skeleton via Terraform.
 
-**Milestone M1:** Schema exists on Cloud SQL. No embeddings yet.
+### D2 — Corpus + extract · 2026-10-28
 
-### Week 2 — First real ingest (12h) · 2026-11-02 → 2026-11-08
+| ID | Work | Done when |
+| --- | --- | --- |
+| D2-1 | 20–50 licensed files in `data/raw` and GCS | `licenses.csv` complete |
+| D2-2 | Extractors + pydantic + hashes into `documents` | Rows present |
+| D2-3 | Quarantine + pytest non-empty load | Green tests |
 
-| ID | Work | Hours | Done when |
-| --- | --- | --- | --- |
-| W2-1 | Seed corpus 20–50 files + `licenses.csv` in GCS | 3 | Prefix listed; licenses complete |
-| W2-2 | Extractors (md, PDF) + pydantic `Document` / `IngestResult` | 5 | Rows in `documents` with hashes |
-| W2-3 | Quarantine path; extract quality log | 2 | Failed files do not crash the job |
-| W2-4 | pytest: non-empty load, schema validation | 2 | Tests green locally |
+**Milestone M2:** `documents` populated.
 
-**Milestone M2:** `documents` populated from GCS.
+### D3 — Chunk + embed + index · 2026-10-29
 
-### Week 3 — Chunk + embed + index (12h) · 2026-11-09 → 2026-11-15
+| ID | Work | Done when |
+| --- | --- | --- |
+| D3-1 | One chunker (`recursive_400_80`) | Chunks stored |
+| D3-2 | Freeze Vertex embedding model; batch embed; skip known hashes | `embeddings` filled |
+| D3-3 | HNSW + `search_chunks` | 5 logged hits |
 
-| ID | Work | Hours | Done when |
-| --- | --- | --- | --- |
-| W3-1 | Recursive 400/80 chunker; heading-aware second strategy | 4 | `strategy` column has both |
-| W3-2 | Freeze embedding model in config; batch embed; skip known hashes | 5 | `embeddings` filled; dim recorded |
-| W3-3 | HNSW index; `search_chunks(query, k, source?)` | 3 | Five hand queries logged |
+**Milestone M3:** Neighbors out. No LLM yet.
 
-**Milestone M3:** Neighbors out of Postgres. No LLM yet.
+### D4 — Incremental + job tests · 2026-10-30
 
-### Week 4 — Incremental + data tests (11h) · 2026-11-16 → 2026-11-22
+| ID | Work | Done when |
+| --- | --- | --- |
+| D4-1 | Hash sync insert / update / tombstone | One-file edit only |
+| D4-2 | pytest fails the job on empty/dim/dupes/orphans | Bad fixture fails |
+| D4-3 | Cloud Run job definition in Terraform | Job deployable |
 
-| ID | Work | Hours | Done when |
-| --- | --- | --- | --- |
-| W4-1 | Sync: insert / update / tombstone by hash | 5 | Edit one file; only that doc’s chunks change |
-| W4-2 | Tests: empty text, dim, dupes, orphans; fail the job | 4 | Intentional bad fixture fails CI locally |
-| W4-3 | Cloud Run job definition + Scheduler stub | 2 | Job runs in GCP against Cloud SQL |
+**Milestone M4:** Incremental ingest.
 
-**Milestone M4:** Incremental ingest in GCP.
+### D5 — API · 2026-10-31
 
-### Week 5 — Serve (11h) · 2026-11-23 → 2026-11-29
-
-| ID | Work | Hours | Done when |
-| --- | --- | --- | --- |
-| W5-1 | FastAPI `/ask` `/health` `/stats`; citations; request id | 5 | Three curl examples in README |
-| W5-2 | Refusal below similarity threshold; token/k caps | 2 | Golden “should refuse” questions pass |
-| W5-3 | Persist query_logs; ship to BigQuery | 3 | Last 5 asks queryable in BQ |
-| W5-4 | Stretch: hybrid tsvector+RRF — **drop if behind** | 1 | Optional |
+| ID | Work | Done when |
+| --- | --- | --- |
+| D5-1 | FastAPI `/ask` `/health` `/stats` | Three curl examples |
+| D5-2 | Refusal threshold + caps | Two refuse questions |
+| D5-3 | `query_logs` in Postgres + ship to BigQuery | Last asks in BQ |
 
 **Milestone M5:** Cited API.
 
-### Week 6 — Eval, harden, ship (12h) · 2026-11-30 → 2026-12-06
+### D6 — Eval + Dataform · 2026-11-01
 
-| ID | Work | Hours | Done when |
-| --- | --- | --- | --- |
-| W6-1 | `eval/golden.json` 20–30 items; harness; `eval/baseline.md` | 5 | recall@5 number exists |
-| W6-2 | One-variable tune; adopt winner in config | 3 | Before/after table in README |
-| W6-3 | GitHub Actions: pytest + eval subset via WIF | 2 | Main is green |
-| W6-4 | README rewrite, architecture true, tag `v1.0`, 3-min demo | 2 | Public repo or public-ready |
+| ID | Work | Done when |
+| --- | --- | --- |
+| D6-1 | `eval/golden.json` 20–30 + harness + `eval/baseline.md` | recall@5 number |
+| D6-2 | One-variable tune; adopt winner | Before/after in README |
+| D6-3 | Dataform assertions run against BQ | CLI exit 0 |
 
-**Milestone M6 / v1.0:** Charter §2.
+**Milestone M6:** Measured quality.
 
-## 4. Definition of done (release)
+### D7 — Ship · 2026-11-02
 
-See charter §2. Additionally:
+| ID | Work | Done when |
+| --- | --- | --- |
+| D7-1 | Cloud Run service in Terraform; README true | Stranger path works |
+| D7-2 | Tag `v1.0`; demo clip; cost screenshot < $25 | Milestone closed |
+| D7-3 | Stop Cloud SQL | `activation_policy = NEVER` |
 
-- [ ] No secrets in git (`gitleaks` or equivalent cheap check)
-- [ ] Cloud SQL can be stopped; README says how to start it for a demo
-- [ ] RAID log has no unaccepted P0
-- [ ] `eval/baseline.md` matches a run you actually executed
+**Milestone M7 / v1.0:** Charter §2.
 
-## 5. Cut list (if hours run out)
+## 4. Cut list (if a day slips)
 
-1. Hybrid search (W5-4)
-2. Second chunk strategy serving (keep it stored, don’t eval both)
-3. BigQuery shipping (Postgres logs only)
-4. Demo recording (keep README + curl)
+1. Hybrid search (already cut)
+2. Second chunk strategy
+3. GitHub Actions WIF (run eval locally, document it)
+4. Demo recording (README + curl remain)
 
-Never cut: hashes, fail-the-job tests, refusal path, eval number, Terraform.
+Never cut: Terraform, hashes, fail-the-job pytest, Dataform assertions, refusal path, eval number, Cloud SQL stop-when-idle.
+
+## 5. Test split
+
+| Layer | Tool | What it proves |
+| --- | --- | --- |
+| Job / API | pytest | Extract, schema, hashes, dim, refusal |
+| Warehouse | Dataform | Rates and eval gates on BigQuery copies |

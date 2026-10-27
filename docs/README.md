@@ -16,6 +16,4 @@
 
 Change control: edit the living docs (`status.md`, `raid.md`) freely. Charter, architecture, data contract, and ADRs change only via a new ADR or an explicit charter amendment.
 
-Owner: Ed Godalle. Kickoff: 2026-10-26. Target ship: 2026-12-06.
-
-Tracking: [milestone P1 v1.0](https://github.com/egodalle/docpipe/milestone/1) · issues [#1](https://github.com/egodalle/docpipe/issues/1)–[#6](https://github.com/egodalle/docpipe/issues/6).
+Owner: Ed Godalle. Kickoff: 2026-10-26. Target ship: **2026-11-02**. Cost cap: **$25**. Terraform: `infra/`. Warehouse tests: `dataform/`.

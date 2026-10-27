@@ -24,6 +24,18 @@ htmlcov/
 .env.*
 !.env.example
 
+# Terraform
+infra/.terraform/
+infra/*.tfstate
+infra/*.tfstate.*
+infra/*.tfvars
+!infra/terraform.tfvars.example
+infra/crash.log
+infra/tfplan
+
+# Dataform
+dataform/node_modules/
+
 # OS / editor
 .DS_Store
 .idea/

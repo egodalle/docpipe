@@ -1,0 +1,7 @@
+{
+  "name": "docpipe-dataform",
+  "private": true,
+  "dependencies": {
+    "@dataform/core": "3.0.23"
+  }
+}

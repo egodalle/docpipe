@@ -1,0 +1,6 @@
+config {
+  type: "declaration",
+  schema: "docpipe_p1",
+  name: "query_logs",
+  description: "API /ask logs copied from Postgres."
+}

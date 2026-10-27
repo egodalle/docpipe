@@ -1,39 +1,31 @@
-# Timeline — DocPipe P1 v1.0
+# Timeline — DocPipe P1 v1.0 (7-day sprint)
 
 | Field | Value |
 | --- | --- |
 | Document | DOC-005 |
-| Version | 1.0 |
+| Version | 1.1 |
 | Timezone | America/New_York |
 | Kickoff | Monday 2026-10-26 |
-| Ship | Saturday 2026-12-06 |
-
-Capacity assumed: ~2 hours on weeknights or a weekend block, totaling 10–12h per calendar week.
+| Ship | Sunday 2026-11-02 |
 
 ```
-Oct 26          Nov 2           Nov 9           Nov 16          Nov 23          Nov 30          Dec 6
-|---- Week 1 ----|---- Week 2 ----|---- Week 3 ----|---- Week 4 ----|---- Week 5 ----|---- Week 6 ----|
- Kickoff+IaC      Corpus+extract   Chunk+embed      Incremental      /ask API         Eval+v1.0
-      M1               M2               M3               M4               M5               M6
+Oct 26      27      28      29      30      31     Nov 1     Nov 2
+|-- D1 TF --|-- D2 extract --|-- D3 embed --|-- D4 sync --|-- D5 API --|-- D6 eval+Dataform --|-- D7 ship --|
+    M1            M2              M3             M4            M5              M6                 v1.0
 ```
 
-| Week | Dates | Milestone | Exit criteria |
+| Day | Date | Milestone | Exit criteria |
 | --- | --- | --- | --- |
-| 1 | Mon 10/26 – Sun 11/01 | M1 Foundations | Cloud SQL up; five tables; Terraform plan clean |
-| 2 | Mon 11/02 – Sun 11/08 | M2 Ingest | GCS corpus loaded; hashes in `documents` |
-| 3 | Mon 11/09 – Sun 11/15 | M3 Retrieve | Embeddings + HNSW; 5 logged similarity queries |
-| 4 | Mon 11/16 – Sun 11/22 | M4 Incremental | One-file edit re-chunks only that doc; Cloud Run job |
-| 5 | Mon 11/23 – Sun 11/29 | M5 API | `/ask` returns citations; refusal path |
-| 6 | Mon 11/30 – Sat 12/06 | M6 v1.0 | recall@5 in README; tag; demo |
+| D1 | Mon 10/26 – Tue 10/27 | M1 Foundations | Terraform plan clean; five tables local; Cloud SQL exists **stopped** |
+| D2 | Wed 10/28 | M2 Ingest | Corpus in GCS; hashes in `documents` |
+| D3 | Thu 10/29 | M3 Retrieve | Embeddings + HNSW; 5 similarity queries |
+| D4 | Fri 10/30 | M4 Incremental | One-file re-chunk; pytest fail-the-job |
+| D5 | Sat 10/31 | M5 API | `/ask` citations + refusal |
+| D6 | Sun 11/01 | M6 Eval | recall@5 in README; Dataform assertions green |
+| D7 | Sun 11/02 | M7 v1.0 | Tag; Cloud SQL stopped; spend ≤ $25 |
 
-**Critical path:** Cloud SQL (W1) → extract (W2) → embed (W3) → `/ask` (W5) → eval (W6). Incremental (W4) can slip two days without moving the ship date. Eval cannot slip; it is the ship gate.
+**Critical path:** Terraform (D1) → extract (D2) → embed (D3) → `/ask` (D5) → eval + Dataform (D6). Incremental (D4) can overlap D5 by a few hours. Eval cannot slip past D7.
 
-**Hold points**
+**Hold:** 2026-10-27 EOD — **cleared** 2026-10-26 night. Billing linked; `terraform apply` done; Cloud SQL `docpipe-pg` **STOPPED**. Do not start SQL overnight.
 
-| Date | Hold | Who |
-| --- | --- | --- |
-| 2026-11-01 | M1 review — stop if billing/API blocked | Engineer |
-| 2026-11-22 | M4 review — drop W5-4 hybrid if job is not in GCP | Engineer |
-| 2026-12-06 | Ship / no-ship | Sponsor (self) |
-
-**Holidays:** US Thanksgiving week is Week 5 (Nov 23–29). Plan API work as a weekend block if Thursday is unavailable. Do not start new scope that week.
+**D1 result:** M1 met (local five tables + GCP skeleton + SQL stopped). D2 starts Wed 10/28.

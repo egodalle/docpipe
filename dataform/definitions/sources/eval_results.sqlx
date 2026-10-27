@@ -1,0 +1,6 @@
+config {
+  type: "declaration",
+  schema: "docpipe_p1",
+  name: "eval_results",
+  description: "Per-question eval rows copied from Postgres."
+}

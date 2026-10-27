@@ -1,0 +1,17 @@
+config {
+  type: "assertion",
+  description: "If the latest ingest reports unchanged corpus, files_reprocessed must be 0."
+}
+
+SELECT
+  run_id,
+  files_reprocessed,
+  corpus_unchanged
+FROM ${ref("ingest_runs")}
+WHERE run_id = (
+    SELECT run_id FROM ${ref("ingest_runs")}
+    ORDER BY finished_at DESC
+    LIMIT 1
+  )
+  AND corpus_unchanged = TRUE
+  AND files_reprocessed > 0

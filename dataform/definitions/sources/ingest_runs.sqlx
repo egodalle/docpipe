@@ -1,0 +1,6 @@
+config {
+  type: "declaration",
+  schema: "docpipe_p1",
+  name: "ingest_runs",
+  description: "One row per ingest job. Shipped from the Python job (D4+)."
+}

@@ -1,0 +1,7 @@
+project_id                   = "docpipe-p1"
+region                       = "us-east1"
+billing_account              = "01B4D2-BE84FB-50F7E3"
+budget_amount_usd            = 25
+budget_email                 = "you@example.com"
+cloud_sql_activation_policy  = "NEVER"
+operator_ip_cidr             = "127.0.0.1/32"

@@ -1,0 +1,15 @@
+config {
+  type: "assertion",
+  description: "Latest ingest run empty-extract rate must stay under 5%."
+}
+
+SELECT
+  run_id,
+  empty_extract_rate
+FROM ${ref("ingest_runs")}
+WHERE run_id = (
+    SELECT run_id FROM ${ref("ingest_runs")}
+    ORDER BY finished_at DESC
+    LIMIT 1
+  )
+  AND empty_extract_rate >= 0.05

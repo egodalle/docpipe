@@ -1,0 +1,11 @@
+{
+  "warehouse": "bigquery",
+  "defaultDatabase": "docpipe-p1",
+  "defaultSchema": "docpipe_p1",
+  "assertionSchema": "docpipe_p1_assertions",
+  "defaultLocation": "us-east1",
+  "vars": {
+    "recall_at_5_min": "0.70",
+    "empty_extract_rate_max": "0.05"
+  }
+}

@@ -1,42 +1,39 @@
 # Status — DocPipe P1
 
-Living document. Newest week at the top.
+Living document. Newest entry at the top.
 
 ## Current
 
 | Field | Value |
 | --- | --- |
-| Phase | Kickoff complete — Week 1 foundations **not started** (infra) |
+| Phase | **D1 / M1 complete.** Next is **D2 ingest** (Wed 10/28) |
 | Date | 2026-10-26 |
-| Milestone | Approaching M1 |
-| Hours this week | Kickoff docs only (not yet billed against the 12h W1 infra budget) |
-| Blocker | GCP project + billing (D1) — not yet created |
-| Next action | Enable billing, create `docpipe-p1`, Terraform skeleton (W1-1 / W1-2) |
+| Ship | 2026-11-02 |
+| Cost cap | $25 |
+| GCP project | `docpipe-p1` (number `129492415939`) ACTIVE |
+| Cloud SQL | `docpipe-pg` **STOPPED** (`activation_policy = NEVER`, `db-f1-micro` ENTERPRISE) |
+| Local DB | Docker pgvector `:5433` — five tables |
+| Blocker | None |
+| Next | D2 corpus + extract (Wed 10/28). Leave Cloud SQL stopped. |
 
-## Kickoff (2026-10-26)
+## 2026-10-26 night — M1 shipped
 
-Shipped:
+- Local compose pgvector on 5433: `documents`, `chunks`, `embeddings`, `query_logs`, `eval_results`.
+- `terraform apply` complete. GCS corpus/quarantine, BigQuery `docpipe_p1` + assertions, ingest/API SAs, `$25` budget, Dataform agent IAM, Secret Manager `docpipe-database-url`.
+- Cloud SQL created runnable (GCP cannot create `NEVER`), then patched to **NEVER**. Confirmed `STOPPED`.
+- GitHub #7 closed. #8–#13 remain D2–D7.
+- D1 Terraform/Dataform files committed to `main` (closes RAID I5).
 
-- Charter, architecture, data contract, ADRs 0001–0004
-- Delivery plan, timeline, RAID, environments
-- GitHub [milestone P1 v1.0](https://github.com/egodalle/docpipe/milestone/1) and issues #1–#6 (one per week)
+## 2026-10-26 evening
 
-Already true from v0:
+- Schedule compressed to 7 days (ADR 0005). Cost cap $25.
+- Dataform added as warehouse tests (ADR 0006). pytest still owns the job.
+- I1 (Day-2 SQL uncommitted) **closed** — shipped in `b320b65`.
 
-- Private repo `egodalle/docpipe`
-- Local Docker Postgres 16 on :5433, database `docpipe`
-- Practice SQL in schema `day2` (not the P1 contract)
+## Log
 
-Open issues: I1 (Day-2 files uncommitted), D1 (GCP project).
-
-## Week log
-
-| Week | Ending | Hours | Milestone | Notes |
+| Day | Date | Hours | Milestone | Notes |
 | --- | --- | --- | --- | --- |
-| 0 kickoff | 2026-10-26 | — | Docs | This row |
-| 1 | 2026-11-01 | | M1 | |
-| 2 | 2026-11-08 | | M2 | |
-| 3 | 2026-11-15 | | M3 | |
-| 4 | 2026-11-22 | | M4 | |
-| 5 | 2026-11-29 | | M5 | Thanksgiving week |
-| 6 | 2026-12-06 | | M6 v1.0 | |
+| 0 | 2026-10-26 | — | Kickoff docs | Six-week plan, then amended |
+| D1 | 2026-10-26 | evening | **M1 done** | Local schema + GCP skeleton; SQL stopped |
+| D2 | 2026-10-28 | | M2 | Corpus + extract — not started |

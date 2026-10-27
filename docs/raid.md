@@ -4,43 +4,42 @@
 | --- | --- |
 | Document | DOC-006 |
 | Status | Live |
-| Last updated | 2026-10-26 |
+| Last updated | 2026-10-26 night (M1 done) |
 
 ## Risks
 
 | ID | Risk | L | I | Mitigation | Owner | Status |
 | --- | --- | --- | --- | --- | --- | --- |
-| R1 | Cloud SQL bill exceeds $90/mo | M | H | Smallest non-HA instance; stop when not demoing; budget alert $50 | Ed | Open |
-| R2 | Vertex quota or model alias changes mid-eval | M | H | Pin model IDs in config week 3; re-embed only if forced (ADR 0003 amendment) | Ed | Open |
-| R3 | PDF extract quality tanks recall | M | M | Prefer markdown in the seed corpus; quarantine scans; measure empty-extract rate | Ed | Open |
-| R4 | Thanksgiving week (W5) slips the API | M | H | Pre-write OpenAPI schema in W4; cut hybrid search | Ed | Open |
-| R5 | Workload Identity Federation blocks CI | L | M | Local eval remains the ship gate; CI is best-effort in W6 | Ed | Open |
-| R6 | Scope creep (agents, UI, Dataflow) | H | H | Charter §5; cut list in delivery plan | Ed | Open — watch |
-
-Likelihood/impact: L/M/H.
+| R1 | Cloud SQL spend exceeds $25 | H | H | `db-f1-micro`, no HA, `activation_policy=NEVER` by default; alerts $10/$20 | Ed | Open |
+| R2 | Vertex quota or model alias changes | M | H | Pin IDs on D3; cache embeddings by hash | Ed | Open |
+| R3 | PDF extract quality tanks recall | M | M | Prefer markdown in seed corpus | Ed | Open |
+| R6 | Scope creep | H | H | Charter §5; 7-day cut list | Ed | Open |
+| R7 | 7-day schedule slip | H | H | Cut hybrid (already); cut WIF; eval still ships | Ed | Open |
+| R8 | Dataform assertions fail with empty BQ | M | L | Seed fixtures; run Dataform after first eval load (D6) | Ed | Open |
 
 ## Assumptions
 
 | ID | Assumption | Validate by |
 | --- | --- | --- |
-| A1 | A GCP billing account is available in week 1 | W1-1 |
-| A2 | Seed Postgres/pgvector docs are redistributable | W2-1 licenses.csv |
-| A3 | 20–50 files are enough for recall@5 ≥ 0.70 | W6-1; if not, add files not features |
-| A4 | Port 5433 local Postgres remains free for dev | Already true as of 2026-09-22 |
-| A5 | 10–12h/week is available through 2026-12-06 | Status updates |
+| A1 | Billing account `01B4D2-BE84FB-50F7E3` can own `docpipe-p1` | **True** — billed; `$25` budget exists |
+| A3 | 20–50 files can hit recall@5 ≥ 0.70 | D6 |
+| A4 | Local :5433 stays free for dev | True |
+| A6 | Unlimited hours this week are actually available | Daily status |
 
 ## Issues
 
 | ID | Issue | Opened | Status |
 | --- | --- | --- | --- |
-| I1 | Day-2 SQL (`sql/`, `notes/`, README) never committed to GitHub | 2026-10-26 | Open — include in first P1 commit |
-| I2 | Homebrew Postgres still occupies host :5432 | 2026-09-22 | Accepted — DocPipe stays on :5433 |
+| I1 | Day-2 SQL never committed | 2026-10-26 | **Closed** in `b320b65` |
+| I2 | Homebrew Postgres occupies :5432 | 2026-09-22 | Accepted — DocPipe on :5433 |
+| I3 | Six-week GitHub issues stale after sprint change | 2026-10-26 | **Closed** — D1–D7 are #7–#13 |
+| I4 | Billing quota exceeded; `docpipe-p1` has no billing | 2026-10-26 | **Closed** — unlinked `beaming-theorem-435112-r8`; linked `docpipe-p1` |
+| I5 | D1 `infra/` + `dataform/` uncommitted on `main` | 2026-10-26 | **Closed** this commit |
 
 ## Dependencies
 
 | ID | Dependency | Needed | Notes |
 | --- | --- | --- | --- |
-| D1 | GCP project + billing | W1 | Blocks Terraform |
-| D2 | Vertex AI API enablement | W3 | Blocks embeddings |
-| D3 | Golden questions (need a real corpus) | W6 | Cannot write before W2 |
-| D4 | GitHub public visibility | W6 | Repo is private today |
+| D1 | GCP project + billing | D1 | **Done** — `docpipe-p1` billed on `01B4D2-BE84FB-50F7E3` |
+| D2 | Vertex AI API | D3 | Blocks embeddings |
+| D3 | Golden questions | D6 | After corpus exists |

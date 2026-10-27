@@ -3,19 +3,17 @@
 | Field | Value |
 | --- | --- |
 | Document | DOC-007 |
-| Version | 1.0 |
+| Version | 1.1 |
 | Date | 2026-10-26 |
 
 ## Environments
 
 | Name | Purpose | Database | Objects | Models | Who applies |
 | --- | --- | --- | --- | --- | --- |
-| `local` | Daily dev | Docker `docpipe-pg` :5433, db `docpipe` | `data/raw/` gitignored | Vertex (same IDs as prod) | Engineer laptop |
-| `gcp` | Demo / prod | Cloud SQL Postgres 16 | GCS `docpipe-p1-corpus` | Vertex | Terraform |
+| `local` | Daily dev | Docker Compose pgvector :5433 | `data/raw/` gitignored | Vertex (same IDs as prod) | Engineer laptop |
+| `gcp` | Demo / prod | Cloud SQL Postgres 16 `db-f1-micro` **stopped unless working** | GCS corpus bucket | Vertex | Terraform (`infra/`) |
 
-There is no staging environment in P1. Eval runs against `gcp` before tagging `v1.0`, and against `local` during development.
-
-Region: `us-east1`.
+Region: `us-east1`. BigQuery dataset location: `us-east1`.
 
 ## Secrets
 
@@ -23,30 +21,32 @@ Region: `us-east1`.
 | --- | --- | --- |
 | `DATABASE_URL` | Secret Manager + local `.env` | No |
 | GCP user ADC | `gcloud auth application-default login` | No |
-| GitHub WIF | Workload Identity Federation | No |
 
-Commit `.env.example` only.
+Commit `.env.example` and `infra/terraform.tfvars.example` only.
 
-## Cost envelope (order of magnitude)
+## Cost envelope ($25 cap)
 
-| Item | If left running | How we control it |
-| --- | --- | --- |
-| Cloud SQL small Postgres | ~$30–70 / month | Stop instance between demos |
-| Cloud Run | Near $0 at this traffic | Scale to zero |
-| Vertex embeddings | Cents if cached by hash | Never re-embed unchanged chunks |
-| Gemini Flash | Cents on golden set + demos | Refusal path skips LLM |
-| GCS / BigQuery | Negligible | Tiny corpus |
+| Item | Control |
+| --- | --- |
+| Cloud SQL `db-f1-micro` | Default **stopped**. ~$0.01/hour only while ALWAYS. Disk still small. |
+| Cloud Run | Scale to zero |
+| Vertex + Gemini Flash | Cache embeddings; tiny golden set |
+| GCS / BigQuery / Dataform | Free-tier volume |
+| VPC / private IP / HA | **Do not enable** |
 
-**Hard cap:** $90 in any calendar month. Budget alert at $50. If the alert fires, destroy Cloud SQL first.
+Budget resource in Terraform: amount **$25**, thresholds 50% and 80% email to the operator.
+
+If the $20-equivalent alert fires: stop Cloud SQL first, then pause Vertex calls.
 
 ## Naming
 
 | Resource | Name |
 | --- | --- |
-| GCP project | `docpipe-p1` (actual ID may get a suffix) |
-| GCS bucket | `docpipe-p1-corpus-<project-number>` (globally unique) |
+| GCP project | `docpipe-p1` (ID may get a numeric suffix) |
+| GCS bucket | `docpipe-p1-corpus-<project-number>` |
 | Cloud SQL instance | `docpipe-pg` |
 | Cloud Run job | `docpipe-ingest` |
 | Cloud Run service | `docpipe-api` |
 | BigQuery dataset | `docpipe_p1` |
-| Service accounts | `sa-docpipe-ingest`, `sa-docpipe-api`, `sa-docpipe-ci` |
+| Dataform assertion dataset | `docpipe_p1_assertions` |
+| Service accounts | `sa-docpipe-ingest`, `sa-docpipe-api` |

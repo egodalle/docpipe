@@ -1,6 +1,8 @@
 # DocPipe
 
-Postgres + pgvector pipeline that turns a folder of documents into a cited retrieval service. **P1 (in flight):** lift that pipeline onto GCP (Cloud Run, Cloud SQL, Vertex, Terraform) and ship eval numbers by 2026-12-06.
+Postgres + pgvector pipeline that turns a folder of documents into a cited retrieval service.
+
+**P1 (in flight, 7-day sprint):** GCP via **Terraform**, cited `/ask`, eval numbers, **Dataform** assertions. Ship **2026-11-02**. Cost cap **$25**.
 
 - [Project docs](docs/README.md)
 - [Charter](docs/CHARTER.md) — executing scope
@@ -9,9 +11,9 @@ Postgres + pgvector pipeline that turns a folder of documents into a cited retri
 
 ## Frozen stack (P1)
 
-Python 3.11 · Terraform · GCS · Cloud SQL Postgres 16 + pgvector · Cloud Run (job + API) · Vertex embeddings + Gemini Flash · BigQuery logs · pytest · Secret Manager.
+Python 3.11 · **Terraform** (`infra/`) · GCS · Cloud SQL Postgres 16 + pgvector · Cloud Run (job + API) · Vertex embeddings + Gemini Flash · BigQuery logs · **Dataform** warehouse tests (`dataform/`) · pytest · Secret Manager.
 
-Out of scope: Spark, Kafka, Dataflow, GKE, fine-tuning, a product UI.
+Out of scope: Spark, Kafka, Dataflow, GKE, fine-tuning, a product UI. Cost cap $25 — Cloud SQL stays stopped unless you are working.
 
 ## Local setup (Day 1)
 

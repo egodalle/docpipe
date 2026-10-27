@@ -1,0 +1,24 @@
+# Local dev only. GCP is created by Terraform (infra/).
+# Host Homebrew Postgres already binds 5432 — DocPipe uses 5433.
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: docpipe-pg
+    environment:
+      POSTGRES_USER: docpipe
+      POSTGRES_PASSWORD: docpipe
+      POSTGRES_DB: docpipe
+    ports:
+      - "5433:5432"
+    volumes:
+      - docpipe-pg-data:/var/lib/postgresql/data
+      - ./sql/001_init.sql:/docker-entrypoint-initdb.d/001_init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U docpipe -d docpipe"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  docpipe-pg-data:

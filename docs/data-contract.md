@@ -97,6 +97,18 @@ No private, employer, or unlicensed files.
 5. Orphan embeddings = 0
 6. Empty-extract rate < 5% for the run
 
+## BigQuery copies (Dataform)
+
+Postgres remains the system of record. The ingest job also writes these tables in dataset `docpipe_p1` for warehouse tests:
+
+| Table | Grain | Required columns |
+| --- | --- | --- |
+| `ingest_runs` | one job | `run_id`, `finished_at`, `empty_extract_rate`, `files_reprocessed`, `corpus_unchanged` |
+| `query_logs` | one `/ask` | same shape as Postgres |
+| `eval_results` | one question in a run | same shape as Postgres |
+
+Dataform assertions live in `dataform/definitions/assertions/`.
+
 ## Serving contract (`POST /ask`)
 
 Request: `{ "question": string, "source"?: string }`  

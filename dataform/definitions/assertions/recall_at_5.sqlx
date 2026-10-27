@@ -1,0 +1,21 @@
+config {
+  type: "assertion",
+  description: "Latest eval run recall@5 must be at least 0.70."
+}
+
+WITH latest AS (
+  SELECT run_id
+  FROM ${ref("eval_results")}
+  ORDER BY created_at DESC
+  LIMIT 1
+),
+scored AS (
+  SELECT
+    AVG(CAST(recall_at_5 AS INT64)) AS recall_at_5
+  FROM ${ref("eval_results")}
+  WHERE run_id = (SELECT run_id FROM latest)
+)
+
+SELECT recall_at_5
+FROM scored
+WHERE recall_at_5 < 0.70

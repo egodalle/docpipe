@@ -1,0 +1,13 @@
+config {
+  type: "assertion",
+  description: "A non-refused answer must have at least one citation."
+}
+
+SELECT
+  request_id,
+  refused,
+  ARRAY_LENGTH(chunk_ids) AS n_cites
+FROM ${ref("query_logs")}
+WHERE refused = FALSE
+  AND ARRAY_LENGTH(chunk_ids) = 0
+  AND created_at >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 7 DAY)
