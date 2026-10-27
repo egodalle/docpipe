@@ -6,17 +6,32 @@ Living document. Newest entry at the top.
 
 | Field | Value |
 | --- | --- |
-| Phase | **D4 / M4 complete.** Next is **D5 API** (Sat 10/31) |
-| Date | 2026-10-26 |
+| Phase | **D5 / M5 complete.** Next is **D6 eval + Dataform** (Sun 11/01) |
+| Date | 2026-10-27 |
 | Ship | 2026-11-02 |
 | Cost cap | $25 |
 | GCP project | `docpipe-p1` (number `129492415939`) ACTIVE |
-| Cloud SQL | `docpipe-pg` **STOPPED** / `NEVER` (reconfirmed 2026-10-26 after D3) |
+| Cloud SQL | `docpipe-pg` **STOPPED** / `NEVER` (reconfirmed 2026-10-27 after D5) |
 | Local DB | 36 live docs, 188 chunks, 188 embeddings on `:5433` |
-| Model | `text-embedding-004` dim **768** (frozen) |
+| Model | embed `text-embedding-004` dim **768**; generate `gemini-3-flash-preview` (global) |
 | Index | `embeddings_hnsw` (cosine) + `search_chunks` |
+| API | `127.0.0.1:8080` `/ask` `/health` `/stats` |
 | Blocker | None |
-| Next | D5 FastAPI `/ask` `/health` `/stats`. Leave SQL stopped. |
+| Next | D6 golden set + recall@5 + Dataform. Leave SQL stopped. |
+
+## 2026-10-27 00:51 — D5 test run
+
+- pytest **27 passed** in 3.85s (`reports/d5-pytest.txt`, `reports/d5-junit.xml`, `reports/d5-report.html`).
+- Live API **6/6 passed** on `127.0.0.1:8080` (`reports/d5-live-api.txt`): health, stats 36/188/188, JSONB cited score 0.755, weather refused, sourdough refused, 2001-char question HTTP 422.
+- Cloud SQL not used.
+
+## 2026-10-27 night — M5 API (ahead of calendar)
+
+- FastAPI `POST /ask`, `GET /health`, `GET /stats`. `docpipe serve` on `:8080`.
+- Refusal when top score < 0.60; question cap 2000 chars; k cap 8. Two off-topic asks refused (weather, sourdough). JSONB ask cited `datatype-json.html` score 0.755.
+- Generation pinned to `gemini-3-flash-preview` / `global` (ADR 0003). `gemini-2.0-flash` shut down 2026-06-01.
+- `query_logs` in Postgres and BigQuery `docpipe_p1.query_logs` (cited + two refused).
+- pytest 27 passed. Cloud SQL left **STOPPED**. GitHub #11 closing with this commit.
 
 ## 2026-10-26 night — M4 incremental (ahead of calendar)
 
@@ -64,3 +79,4 @@ Living document. Newest entry at the top.
 | D2 | 2026-10-26 | night | **M2 done** | 36 licensed files; hashes in `documents`; pytest green |
 | D3 | 2026-10-26 | night | **M3 done** | 188 chunks + embeddings; HNSW; 5 logged queries |
 | D4 | 2026-10-26 | night | **M4 done** | Hash sync; fail-the-job tests; Cloud Run job TF |
+| D5 | 2026-10-27 | night | **M5 done** | `/ask` citations + refusal; logs in BQ |

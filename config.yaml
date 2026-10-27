@@ -5,7 +5,14 @@ embedding:
   dim: 768
   batch_size: 12
 generation:
-  model: gemini-2.0-flash
+  model: gemini-3-flash-preview
+  location: global
+serve:
+  refuse_min_score: 0.60
+  question_max_chars: 2000
+  k_default: 5
+  k_max: 8
+  max_context_chars: 6000
 chunk:
   strategy: recursive_400_80
   size: 400

@@ -27,6 +27,17 @@ Pinned in `config.yaml` and live Vertex (`docpipe-p1`, `us-east1`):
 
 Live probe returned dim 768, matching `sql/001_init.sql` `vector(768)` / `CHECK (dim = 768)`. No ALTER. Changing the model or dim requires a new amendment and a schema migration.
 
+## Amendment 2026-10-27 (D5)
+
+`gemini-2.0-flash` was shut down 2026-06-01. Live probe on `docpipe-p1`:
+
+| Role | ID | Location |
+| --- | --- | --- |
+| Embeddings | `text-embedding-004` dim 768 | `us-east1` (unchanged) |
+| Generation | **`gemini-3-flash-preview`** | **`global`** |
+
+`us-east1` / `us-central1` publisher 404 for Gemini 2.0/2.5. Charter §7 allows a location ADR when quota/availability forces it. Embeddings stay `us-east1` so the index does not move. Generation uses a separate Gen AI client so `vertexai.init` for embeddings is not overwritten.
+
 ## Consequences
 
 - **Good:** One IAM surface (Vertex user); cost is small if we cache embeddings by chunk hash.

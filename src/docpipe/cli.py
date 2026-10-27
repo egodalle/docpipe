@@ -15,6 +15,7 @@ from docpipe.config import (
 from docpipe.fetch import fetch_corpus
 from docpipe.index import chunk_corpus, embed_corpus, index_corpus
 from docpipe.ingest import ingest_corpus
+from docpipe.ask import ask
 from docpipe.search import ask_neighbors, run_example_queries
 from docpipe.sync import sync_corpus
 
@@ -32,6 +33,13 @@ def main(argv: list[str] | None = None) -> int:
     search.add_argument("question", nargs="?", help="Question to embed and search")
     search.add_argument("--examples", action="store_true", help="Run the five D3 queries")
     search.add_argument("-k", type=int, default=5)
+    ask_p = sub.add_parser("ask", help="Retrieve + refuse or answer with citations")
+    ask_p.add_argument("question", help="Question to answer from retrieved chunks")
+    ask_p.add_argument("-k", type=int, default=None)
+    ask_p.add_argument("--source", default=None)
+    serve = sub.add_parser("serve", help="Run FastAPI /ask /health /stats on localhost")
+    serve.add_argument("--host", default="127.0.0.1")
+    serve.add_argument("--port", type=int, default=8080)
     gcs = sub.add_parser("upload-gcs", help="Copy data/raw and licenses.csv to GCS")
     gcs.add_argument("--bucket", default=GCS_BUCKET)
     args = parser.parse_args(argv)
@@ -98,10 +106,34 @@ def main(argv: list[str] | None = None) -> int:
         result = ask_neighbors(args.question, k=args.k)
         _print_result(result)
         return 0
+    if args.cmd == "ask":
+        result = ask(args.question, k=args.k, source=args.source)
+        _print_ask(result)
+        return 0
+    if args.cmd == "serve":
+        import uvicorn
+
+        uvicorn.run("docpipe.api:app", host=args.host, port=args.port)
+        return 0
     if args.cmd == "upload-gcs":
         _upload_gcs(args.bucket)
         return 0
     return 1
+
+
+def _print_ask(result) -> None:
+    status = "refused" if result.refused else "answered"
+    print(
+        f"ask {status} model={result.model} latency_ms={result.latency_ms} "
+        f"request_id={result.request_id}"
+    )
+    if result.answer:
+        print(result.answer)
+    for rank, cite in enumerate(result.citations, start=1):
+        print(
+            f"{rank}. score={cite.score:.4f} chunk_id={cite.chunk_id} uri={cite.uri}\n"
+            f"   {cite.snippet}"
+        )
 
 
 def _print_result(result) -> None:

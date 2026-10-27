@@ -190,14 +190,31 @@ def search_chunks(
     conn: psycopg.Connection,
     query_embedding: Sequence[float],
     k: int = 5,
+    source: str | None = None,
 ) -> list[SearchHit]:
     if k <= 0:
         raise ValueError("k must be > 0")
-    rows = conn.execute(
-        "SELECT chunk_id, document_id, uri, source, ordinal, body, score "
-        "FROM search_chunks(%s::vector, %s)",
-        (_vector_literal(query_embedding), k),
-    ).fetchall()
+    vec = _vector_literal(query_embedding)
+    if source:
+        rows = conn.execute(
+            """
+            SELECT c.id, c.document_id, d.uri, d.source, c.ordinal, c.body,
+                   (1 - (e.embedding <=> %s::vector))::double precision AS score
+            FROM embeddings e
+            JOIN chunks c ON c.id = e.chunk_id
+            JOIN documents d ON d.id = c.document_id
+            WHERE d.status = 'live' AND d.source = %s
+            ORDER BY e.embedding <=> %s::vector
+            LIMIT %s
+            """,
+            (vec, source, vec, k),
+        ).fetchall()
+    else:
+        rows = conn.execute(
+            "SELECT chunk_id, document_id, uri, source, ordinal, body, score "
+            "FROM search_chunks(%s::vector, %s)",
+            (vec, k),
+        ).fetchall()
     hits: list[SearchHit] = []
     for row in rows:
         hits.append(
@@ -224,19 +241,21 @@ def insert_query_log(
     latency_ms: int,
     model: str,
     refused: bool = False,
+    answer: str | None = None,
 ) -> None:
     conn.execute(
         """
         INSERT INTO query_logs (
             request_id, question, chunk_ids, scores, answer, refused, latency_ms, model
         )
-        VALUES (%s, %s, %s::uuid[], %s, NULL, %s, %s, %s)
+        VALUES (%s, %s, %s::uuid[], %s, %s, %s, %s, %s)
         """,
         (
             request_id,
             question,
             [UUID(value) for value in chunk_ids],
             list(scores),
+            answer,
             refused,
             latency_ms,
             model,
@@ -250,7 +269,8 @@ def counts(conn: psycopg.Connection) -> dict[str, int]:
         SELECT
             (SELECT count(*) FROM documents WHERE status = 'live') AS documents,
             (SELECT count(*) FROM chunks) AS chunks,
-            (SELECT count(*) FROM embeddings) AS embeddings
+            (SELECT count(*) FROM embeddings) AS embeddings,
+            (SELECT count(*) FROM query_logs) AS query_logs
         """
     ).fetchone()
     assert row is not None
@@ -258,6 +278,7 @@ def counts(conn: psycopg.Connection) -> dict[str, int]:
         "documents": int(row[0]),
         "chunks": int(row[1]),
         "embeddings": int(row[2]),
+        "query_logs": int(row[3]),
     }
 
 

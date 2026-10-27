@@ -1,0 +1,28 @@
+DocPipe D5 live API tests — 2026-10-27T00:51:03-04:00
+Host http://127.0.0.1:8080 · local Postgres · Cloud SQL not used
+6/6 passed
+
+[PASS] Desk is open
+       Expect: API and local database respond
+       latency_ms=37
+
+[PASS] Library counts
+       Expect: 36 manuals, 188 pages, 188 search cards
+       latency_ms=36
+
+[PASS] On-topic question gets a cited answer
+       Expect: Answer from datatype-json.html, score >= 0.60, not refused
+       latency_ms=12074 top_uri=file:///Users/edgodalle/docpipe/data/raw/postgres-docs/datatype-json.html top_score=0.7554937530945626 request_id=ede8e1f6-0d08-4a6d-a59d-d4a117a9ac3c
+       Answer: In PostgreSQL, `jsonb` stores data in a decomposed binary format [116df1e7-8efb-4b98-b0f4-15b6e3ef4a1d]. This storage method involves several specific characteristics:  *   **Data Structure:** Unlike the `json` type, whi
+
+[PASS] Off-topic weather is refused
+       Expect: refused=true, no answer, no Gemini spend on a made-up reply
+       latency_ms=2974 top_score=0.38758195087250913 request_id=11b956fc-aa68-4e18-af3a-ce8cf0c939df
+
+[PASS] Off-topic cooking is refused
+       Expect: refused=true, no answer
+       latency_ms=2862 top_score=0.3410282308569479 request_id=223b60f3-68fa-4969-aaa4-075aeb4c2cba
+
+[PASS] Overlong question is rejected
+       Expect: HTTP 422
+       http_status=422

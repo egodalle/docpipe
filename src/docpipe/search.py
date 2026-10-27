@@ -31,9 +31,10 @@ def search_chunks(
     query_embedding: list[float],
     k: int = 5,
     database_url: str | None = None,
+    source: str | None = None,
 ) -> list[SearchHit]:
     with connect(database_url) as conn:
-        return store_search_chunks(conn, query_embedding, k=k)
+        return store_search_chunks(conn, query_embedding, k=k, source=source)
 
 
 def ask_neighbors(

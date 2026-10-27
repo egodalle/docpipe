@@ -1,0 +1,58 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.11.11, pytest-9.1.1, pluggy-1.7.0 -- /Users/edgodalle/docpipe/.venv/bin/python3.11
+cachedir: .pytest_cache
+metadata: {'Python': '3.11.11', 'Platform': 'macOS-15.5-arm64-arm-64bit', 'Packages': {'pytest': '9.1.1', 'pluggy': '1.7.0'}, 'Plugins': {'metadata': '3.1.1', 'html': '4.2.0', 'anyio': '4.15.1'}, 'JAVA_HOME': '/opt/homebrew/Cellar/openjdk@21/21.0.10/libexec/openjdk.jdk/Contents/Home'}
+rootdir: /Users/edgodalle/docpipe
+configfile: pyproject.toml
+testpaths: tests
+plugins: metadata-3.1.1, html-4.2.0, anyio-4.15.1
+collecting ... collected 27 items
+
+tests/test_api.py::test_health_and_stats PASSED                          [  3%]
+tests/test_api.py::test_ask_returns_citations PASSED                     [  7%]
+tests/test_api.py::test_off_topic_questions_are_refused PASSED           [ 11%]
+tests/test_api.py::test_question_length_and_k_caps PASSED                [ 14%]
+tests/test_api.py::test_invalid_source_is_rejected PASSED                [ 18%]
+tests/test_api.py::test_validate_ask_bounds PASSED                       [ 22%]
+tests/test_chunker.py::test_chunker_skips_empty_and_whitespace PASSED    [ 25%]
+tests/test_chunker.py::test_short_text_is_one_chunk PASSED               [ 29%]
+tests/test_chunker.py::test_recursive_split_respects_paragraphs_and_size PASSED [ 33%]
+tests/test_chunker.py::test_overlap_shares_tokens_across_neighbors PASSED [ 37%]
+tests/test_chunker.py::test_default_strategy_name_and_bounds PASSED      [ 40%]
+tests/test_embed.py::test_pack_batches_respects_size_and_token_budget PASSED [ 44%]
+tests/test_extract.py::test_markdown_strips_front_matter_and_hashes PASSED [ 48%]
+tests/test_extract.py::test_html_uses_doc_content PASSED                 [ 51%]
+tests/test_extract.py::test_empty_file_is_empty_extract PASSED           [ 55%]
+tests/test_index.py::test_index_skip_known_hash_and_dim PASSED           [ 59%]
+tests/test_index.py::test_index_fails_on_dim_mismatch PASSED             [ 62%]
+tests/test_index.py::test_empty_chunk_body_rejected_by_schema PASSED     [ 66%]
+tests/test_index.py::test_duplicate_live_hash_fails_the_job PASSED       [ 70%]
+tests/test_index.py::test_search_chunks_returns_self_neighbor PASSED     [ 74%]
+tests/test_index.py::test_insert_embedding_rejects_wrong_vector_width PASSED [ 77%]
+tests/test_ingest.py::test_ingest_nonempty_load PASSED                   [ 81%]
+tests/test_ingest.py::test_quarantine_and_fail_rate PASSED               [ 85%]
+tests/test_licenses.py::test_seed_corpus_is_licensed_and_sized PASSED    [ 88%]
+tests/test_sync.py::test_one_file_edit_reindexes_only_that_doc PASSED    [ 92%]
+tests/test_sync.py::test_removed_file_is_tombstoned PASSED               [ 96%]
+tests/test_sync.py::test_chunks_on_tombstoned_docs_fail_the_job PASSED   [100%]
+
+=============================== warnings summary ===============================
+.venv/lib/python3.11/site-packages/fastapi/testclient.py:1
+  /Users/edgodalle/docpipe/.venv/lib/python3.11/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+------ generated xml file: /Users/edgodalle/docpipe/reports/d5-junit.xml -------
+============================= slowest 10 durations =============================
+0.33s call     tests/test_sync.py::test_one_file_edit_reindexes_only_that_doc
+0.25s call     tests/test_index.py::test_index_skip_known_hash_and_dim
+0.22s call     tests/test_index.py::test_search_chunks_returns_self_neighbor
+0.22s call     tests/test_ingest.py::test_quarantine_and_fail_rate
+0.20s setup    tests/test_api.py::test_health_and_stats
+0.18s call     tests/test_sync.py::test_removed_file_is_tombstoned
+0.17s call     tests/test_index.py::test_insert_embedding_rejects_wrong_vector_width
+0.16s setup    tests/test_api.py::test_off_topic_questions_are_refused
+0.14s call     tests/test_index.py::test_index_fails_on_dim_mismatch
+0.14s setup    tests/test_api.py::test_ask_returns_citations
+- Generated html report: file:///Users/edgodalle/docpipe/reports/d5-report.html -
+======================== 27 passed, 1 warning in 3.85s =========================

@@ -69,4 +69,23 @@ pytest
 
 Cloud Run job `docpipe-ingest` is in Terraform (`infra/run.tf`) but not created until `ingest_image` is set. Do not run it while Cloud SQL is stopped.
 
+## Local API (D5)
+
+Cited `/ask` against Docker `:5433`. Gemini is called only when the top score is ≥ `serve.refuse_min_score` (0.60). Cloud SQL stays **stopped**.
+
+```bash
+docpipe serve                # 127.0.0.1:8080
+curl -s localhost:8080/health
+curl -s localhost:8080/stats
+curl -s localhost:8080/ask -H 'content-type: application/json' \
+  -d '{"question":"How does JSONB store JSON in PostgreSQL?"}'
+curl -s localhost:8080/ask -H 'content-type: application/json' \
+  -d '{"question":"What is the weather in Paris tomorrow?"}'
+curl -s localhost:8080/ask -H 'content-type: application/json' \
+  -d '{"question":"How do I bake sourdough bread at home?"}'
+pytest
+```
+
+Each `/ask` is stored in Postgres `query_logs` and copied to BigQuery `docpipe_p1.query_logs`. Cloud Run **service** is D7.
+
 SQL primer notes: [notes/day2-sql.md](notes/day2-sql.md). Queries: [sql/practice.sql](sql/practice.sql).

@@ -35,3 +35,5 @@ Oct 26      27      28      29      30      31     Nov 1     Nov 2
 **D3 result:** M3 met 2026-10-26 (ahead of calendar). 188 chunks + 188 `text-embedding-004` vectors (dim 768) on :5433; `embeddings_hnsw`; five queries in `query_logs`. Cloud SQL stayed **STOPPED**.
 
 **D4 result:** M4 met 2026-10-26 (ahead of calendar). Hash sync insert/update/tombstone; one-file edit reindexes only that doc; pytest 21; Cloud Run job TF gated on `ingest_image`. Next is D5 `/ask`.
+
+**D5 result:** M5 met 2026-10-27 (ahead of calendar). Local `/ask` citations + refusal; `query_logs` in Postgres and BQ; Gemini `gemini-3-flash-preview` on `global`. Cloud SQL stayed **STOPPED**. Next is D6 eval.

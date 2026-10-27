@@ -4,14 +4,14 @@
 | --- | --- |
 | Document | DOC-006 |
 | Status | Live |
-| Last updated | 2026-10-26 night (M4 done) |
+| Last updated | 2026-10-27 night (M5 done) |
 
 ## Risks
 
 | ID | Risk | L | I | Mitigation | Owner | Status |
 | --- | --- | --- | --- | --- | --- | --- |
 | R1 | Cloud SQL spend exceeds $25 | H | H | `db-f1-micro`, no HA, `activation_policy=NEVER` by default; alerts $10/$20 | Ed | Open |
-| R2 | Vertex quota or model alias changes | M | H | Pinned `text-embedding-004` dim 768 (ADR 0003 amendment); skip re-embed on known hashes | Ed | Open (quota) |
+| R2 | Vertex quota or model alias changes | M | H | Embeddings pinned `text-embedding-004` dim 768; generation pinned `gemini-3-flash-preview` / `global` (ADR 0003 D5) | Ed | Open (quota) |
 | R3 | PDF extract quality tanks recall | M | M | Prefer markdown in seed corpus | Ed | Open |
 | R6 | Scope creep | H | H | Charter §5; 7-day cut list | Ed | Open |
 | R7 | 7-day schedule slip | H | H | Cut hybrid (already); cut WIF; eval still ships | Ed | Open |
@@ -37,6 +37,8 @@
 | I5 | D1 `infra/` + `dataform/` uncommitted on `main` | 2026-10-26 | **Closed** in `29ba223` |
 | I6 | D2 ingest pack (`src/`, `tests/`, `data/licenses.csv`) uncommitted | 2026-10-26 | **Closed** this commit — GitHub #8 closing |
 | I7 | D3+D4 pack uncommitted on `main` | 2026-10-26 | **Closed** this commit — GitHub #9 and #10 closing |
+| I8 | `gemini-2.0-flash` 404 (shut down 2026-06-01) | 2026-10-27 | **Closed** — pinned `gemini-3-flash-preview` / `global` |
+| I9 | D5 API pack uncommitted on `main` | 2026-10-27 | **Closed** this commit — GitHub #11 closing |
 
 ## Dependencies
 

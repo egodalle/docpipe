@@ -1,0 +1,77 @@
+{
+  "when": "2026-10-27T00:51:03-04:00",
+  "host": "http://127.0.0.1:8080",
+  "database": "local Docker :5433",
+  "cloud_sql": "not used",
+  "passed": 6,
+  "failed": 0,
+  "cases": [
+    {
+      "id": "live-health",
+      "name": "Desk is open",
+      "expect": "API and local database respond",
+      "pass": true,
+      "latency_ms": 37,
+      "response": {
+        "ok": true,
+        "db": "up",
+        "database": "local"
+      }
+    },
+    {
+      "id": "live-stats",
+      "name": "Library counts",
+      "expect": "36 manuals, 188 pages, 188 search cards",
+      "pass": true,
+      "latency_ms": 36,
+      "response": {
+        "documents": 36,
+        "chunks": 188,
+        "embeddings": 188,
+        "query_logs": 32,
+        "embedding_model": "text-embedding-004",
+        "embedding_dim": 768,
+        "generation_model": "gemini-3-flash-preview",
+        "refuse_min_score": 0.6,
+        "k_default": 5
+      }
+    },
+    {
+      "id": "live-ask-jsonb",
+      "name": "On-topic question gets a cited answer",
+      "expect": "Answer from datatype-json.html, score >= 0.60, not refused",
+      "pass": true,
+      "latency_ms": 12074,
+      "request_id": "ede8e1f6-0d08-4a6d-a59d-d4a117a9ac3c",
+      "top_uri": "file:///Users/edgodalle/docpipe/data/raw/postgres-docs/datatype-json.html",
+      "top_score": 0.7554937530945626,
+      "answer_preview": "In PostgreSQL, `jsonb` stores data in a decomposed binary format [116df1e7-8efb-4b98-b0f4-15b6e3ef4a1d]. This storage method involves several specific characteristics:\n\n*   **Data Structure:** Unlike the `json` type, which stores an exact copy of the input text, `jsonb` does not ",
+      "n_citations": 5
+    },
+    {
+      "id": "live-refuse-weather",
+      "name": "Off-topic weather is refused",
+      "expect": "refused=true, no answer, no Gemini spend on a made-up reply",
+      "pass": true,
+      "latency_ms": 2974,
+      "request_id": "11b956fc-aa68-4e18-af3a-ce8cf0c939df",
+      "top_score": 0.38758195087250913
+    },
+    {
+      "id": "live-refuse-bread",
+      "name": "Off-topic cooking is refused",
+      "expect": "refused=true, no answer",
+      "pass": true,
+      "latency_ms": 2862,
+      "request_id": "223b60f3-68fa-4969-aaa4-075aeb4c2cba",
+      "top_score": 0.3410282308569479
+    },
+    {
+      "id": "live-cap-length",
+      "name": "Overlong question is rejected",
+      "expect": "HTTP 422",
+      "pass": true,
+      "http_status": "422"
+    }
+  ]
+}

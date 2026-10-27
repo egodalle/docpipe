@@ -36,7 +36,7 @@ DocPipe turns a GCS prefix of public technical docs into a cited question-answer
 | System of record | Cloud SQL Postgres 16 + pgvector | Tables in [data-contract.md](data-contract.md) |
 | Serve | Cloud Run **service** `docpipe-api` | `/ask` `/health` `/stats` |
 | Embeddings | Vertex AI `text-embedding-004` (dim 768, frozen in `config.yaml`) | Chunk + query vectors, same model both sides |
-| Generation | Vertex AI Gemini Flash | Answer only from retrieved context |
+| Generation | Vertex AI `gemini-3-flash-preview` (global; ADR 0003) | Answer only from retrieved context |
 | Analytics | BigQuery `docpipe_p1` | Copies of query_logs, eval_results, ingest_runs |
 | Warehouse tests | Dataform CLI (`dataform/`) | Assertions on BQ copies (ADR 0006) |
 | Secrets | Secret Manager | DB URL, no other long-lived keys |

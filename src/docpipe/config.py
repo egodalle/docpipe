@@ -32,6 +32,12 @@ class AppConfig:
     embedding_dim: int
     embedding_batch_size: int
     generation_model: str
+    generation_location: str
+    refuse_min_score: float
+    question_max_chars: int
+    k_default: int
+    k_max: int
+    max_context_chars: int
     chunk_strategy: str
     chunk_size: int
     chunk_overlap: int
@@ -46,6 +52,7 @@ def load_config() -> AppConfig:
     chunk = raw["chunk"]
     gcp = raw["gcp"]
     generation = raw.get("generation") or {}
+    serve = raw.get("serve") or {}
     dim = int(embedding["dim"])
     if dim != SQL_DIM:
         raise ValueError(
@@ -56,7 +63,13 @@ def load_config() -> AppConfig:
         embedding_model=str(embedding["model"]),
         embedding_dim=dim,
         embedding_batch_size=int(embedding.get("batch_size") or 100),
-        generation_model=str(generation.get("model") or "gemini-2.0-flash"),
+        generation_model=str(generation.get("model") or "gemini-3-flash-preview"),
+        generation_location=str(generation.get("location") or "global"),
+        refuse_min_score=float(serve.get("refuse_min_score") or 0.60),
+        question_max_chars=int(serve.get("question_max_chars") or 2000),
+        k_default=int(serve.get("k_default") or 5),
+        k_max=int(serve.get("k_max") or 8),
+        max_context_chars=int(serve.get("max_context_chars") or 6000),
         chunk_strategy=str(chunk["strategy"]),
         chunk_size=int(chunk["size"]),
         chunk_overlap=int(chunk["overlap"]),
@@ -70,6 +83,12 @@ EMBEDDING_MODEL = _CFG.embedding_model
 EMBEDDING_DIM = _CFG.embedding_dim
 EMBEDDING_BATCH = _CFG.embedding_batch_size
 GENERATION_MODEL = _CFG.generation_model
+GENERATION_LOCATION = _CFG.generation_location
+REFUSE_MIN_SCORE = _CFG.refuse_min_score
+QUESTION_MAX_CHARS = _CFG.question_max_chars
+K_DEFAULT = _CFG.k_default
+K_MAX = _CFG.k_max
+MAX_CONTEXT_CHARS = _CFG.max_context_chars
 CHUNK_STRATEGY = _CFG.chunk_strategy
 CHUNK_SIZE = _CFG.chunk_size
 CHUNK_OVERLAP = _CFG.chunk_overlap
