@@ -14,7 +14,7 @@
 | R2 | Vertex quota or model alias changes | M | H | Embeddings pinned `text-embedding-004` dim 768; generation pinned `gemini-3-flash-preview` / `global` (ADR 0003 D5) | Ed | Open (quota) |
 | R3 | PDF extract quality tanks recall | M | M | Prefer markdown in seed corpus | Ed | Open |
 | R6 | Scope creep | H | H | Charter §5; 7-day cut list | Ed | Open |
-| R7 | 7-day schedule slip | H | H | Cut hybrid (already); cut WIF; eval still ships | Ed | Closed — v1.0 tagged 2026-10-27 |
+| R7 | 7-day schedule slip | H | H | Cut hybrid (already); cut WIF; eval still ships | Ed | Closed — v1.0 tagged 2026-10-27. WIF landed post-v1.0 (ADR 0010). |
 | R8 | Dataform assertions fail with empty BQ | M | L | Seeded `ingest_runs` + `eval_results` on D6; CLI 4/4 green | Ed | Closed |
 
 ## Assumptions

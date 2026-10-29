@@ -53,3 +53,9 @@ variable "api_image" {
   description = "Container image for the Cloud Run API service. Empty skips creating the service until you push to Artifact Registry."
   default     = ""
 }
+
+variable "github_repository" {
+  type        = string
+  description = "GitHub owner/repo allowed to impersonate sa-docpipe-ci via Workload Identity Federation."
+  default     = "egodalle/docpipe"
+}

@@ -22,4 +22,6 @@ D6 seeded `ingest_runs` and wrote `eval_results` from `docpipe eval`. `query_log
 | `cited_or_refused` | Non-refused answers have citations |
 | `incremental_noop` | Unchanged corpus ⇒ 0 files reprocessed |
 
-Hosted Dataform Git linking is out of P1 v1.0 (ADR 0006). Terraform enables the API and IAM so it can be added later.
+Merge to `main` runs the same commands in GitHub Actions as `sa-docpipe-ci` (Workload Identity Federation, [ADR 0010](../docs/adr/0010-github-dataform-wif.md)). Pull requests compile only. Cloud SQL is not used.
+
+Hosted Dataform Git linking stays off: SQLX lives under `dataform/`, and hosted compile expects `dataform.json` at the repo root. BigQuery `docpipe_p1_assertions` is where a merge shows up in GCP.

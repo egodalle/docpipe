@@ -107,7 +107,7 @@ Postgres remains the system of record. The ingest job also writes these tables i
 | `query_logs` | one `/ask` | same shape as Postgres |
 | `eval_results` | one question in a run | same shape as Postgres |
 
-Dataform assertions live in `dataform/definitions/assertions/`.
+Dataform assertions live in `dataform/definitions/assertions/`. Merge to `main` re-runs them in GitHub Actions against these datasets ([ADR 0010](adr/0010-github-dataform-wif.md)).
 
 ## Serving contract (`POST /ask`)
 

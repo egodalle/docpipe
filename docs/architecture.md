@@ -38,7 +38,7 @@ DocPipe turns a GCS prefix of public technical docs into a cited question-answer
 | Embeddings | Vertex AI `text-embedding-004` (dim 768, frozen in `config.yaml`) | Chunk + query vectors, same model both sides |
 | Generation | Vertex AI `gemini-3-flash-preview` (global; ADR 0003) | Answer only from retrieved context |
 | Analytics | BigQuery `docpipe_p1` | Copies of query_logs, eval_results, ingest_runs |
-| Warehouse tests | Dataform CLI (`dataform/`) | Assertions on BQ copies (ADR 0006) |
+| Warehouse tests | Dataform CLI (`dataform/`) + GitHub Actions | Assertions on BQ copies (ADR 0006, ADR 0010) |
 | Secrets | Secret Manager | DB URL, no other long-lived keys |
 | IaC | Terraform (`infra/`) | All GCP resources; Cloud SQL stopped by default |
 | Schedule | Cloud Scheduler | Nightly ingest (full incremental). Event-driven is P3. |
@@ -76,7 +76,7 @@ DocPipe turns a GCS prefix of public technical docs into a cited question-answer
 | --- | --- |
 | `sa-docpipe-ingest` | GCS object viewer on corpus; Cloud SQL client; Vertex user; BQ editor on `docpipe_p1` |
 | `sa-docpipe-api` | Cloud SQL client; Vertex user; BQ editor on `query_logs` only |
-| `sa-docpipe-ci` | WIF from GitHub; run eval job; no corpus write |
+| `sa-docpipe-ci` | WIF from GitHub Actions; Dataform CLI against BQ; no SQL, GCS write, or Vertex |
 | User (Ed) | Owner on the GCP project for Terraform apply |
 
 No JSON keys in the repo. GitHub Actions uses Workload Identity Federation.

@@ -49,4 +49,4 @@ If the $20-equivalent alert fires: stop Cloud SQL first, then pause Vertex calls
 | Cloud Run service | `docpipe-api` |
 | BigQuery dataset | `docpipe_p1` |
 | Dataform assertion dataset | `docpipe_p1_assertions` |
-| Service accounts | `sa-docpipe-ingest`, `sa-docpipe-api` |
+| Service accounts | `sa-docpipe-ingest`, `sa-docpipe-api`, `sa-docpipe-ci` |

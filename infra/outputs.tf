@@ -53,3 +53,11 @@ output "api_uri" {
 output "database_socket_secret" {
   value = google_secret_manager_secret.database_socket_url.name
 }
+
+output "ci_sa" {
+  value = google_service_account.ci.email
+}
+
+output "github_wif_provider" {
+  value = google_iam_workload_identity_pool_provider.github.name
+}

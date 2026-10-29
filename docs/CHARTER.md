@@ -18,6 +18,7 @@
 | --- | --- |
 | 2026-10-26 v1.0 | Kickoff: six-week plan, $90 cost envelope |
 | 2026-10-26 v1.1 | 7-day sprint; $25 cap; Dataform warehouse tests; Terraform required |
+| 2026-10-29 v1.2 | Post-v1.0: GitHub Actions WIF runs Dataform on merge (ADR 0010). Hosted Git PAT linking still out of scope. |
 
 ## 1. Problem
 

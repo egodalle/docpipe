@@ -13,3 +13,4 @@ Format: title, status, context, decision, consequences. Numbers are append-only.
 | [0007](0007-hybrid-rrf.md) | Hybrid lexical + vector RRF in Postgres | Accepted |
 | [0008](0008-refuse-eval-citation-integrity.md) | Refuse golden set + citation integrity on `/ask` | Accepted |
 | [0009](0009-dynamic-corpus-path.md) | Local UI/API can switch the corpus directory | Accepted |
+| [0010](0010-github-dataform-wif.md) | GitHub Actions WIF runs Dataform on merge to main | Accepted |

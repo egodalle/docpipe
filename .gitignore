@@ -26,6 +26,7 @@ htmlcov/
 **/application_default_credentials.json
 **/*service-account*.json
 **/service-account*.json
+gha-creds-*.json
 
 # Terraform
 infra/.terraform/
