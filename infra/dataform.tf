@@ -1,8 +1,8 @@
-# Warehouse tests are the SQLX files in ../dataform/, run with:
-#   npx @dataform/cli run --timeout 10m
-# Hosted Dataform Git linking needs a GitHub PAT in Secret Manager — out of
-# P1 v1.0 (ADR 0006). Terraform still enables the API and grants the default
-# Dataform service agent access to the datasets so a later hosted repo works.
+# Warehouse tests are the SQLX files in ../dataform/.
+# Local:  npx dataform run --timeout 10m
+# Merge:  GitHub Actions as sa-docpipe-ci via WIF (ADR 0010).
+# Hosted Dataform Git remote is still off: the project lives under dataform/,
+# and hosted compile expects dataform.json at the repo root.
 
 resource "google_project_service_identity" "dataform" {
   provider = google-beta
@@ -32,8 +32,8 @@ resource "google_bigquery_dataset_iam_member" "dataform_assertions" {
 }
 
 resource "google_project_iam_member" "dataform_job_user" {
-  project = var.project_id
-  role    = "roles/bigquery.jobUser"
-  member  = "serviceAccount:${google_project_service_identity.dataform.email}"
+  project    = var.project_id
+  role       = "roles/bigquery.jobUser"
+  member     = "serviceAccount:${google_project_service_identity.dataform.email}"
   depends_on = [time_sleep.dataform_identity]
 }

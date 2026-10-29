@@ -130,6 +130,8 @@ docpipe eval                 # persist winner rows to Postgres + BigQuery
 cd dataform && npx dataform run
 ```
 
+Merge to `main` runs that last command in GitHub Actions as `sa-docpipe-ci` (Workload Identity Federation, no JSON keys). Pull requests compile only. Results land in BigQuery `docpipe_p1_assertions`. Cloud SQL is not used ([ADR 0010](docs/adr/0010-github-dataform-wif.md)).
+
 ## Cloud Run API (D7)
 
 Same image serves `/ask` and `docpipe sync`. Cloud SQL stays **stopped** until you flip `cloud_sql_activation_policy = "ALWAYS"`. Do not leave ALWAYS on overnight.

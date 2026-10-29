@@ -8,6 +8,11 @@ resource "google_service_account" "api" {
   display_name = "DocPipe API"
 }
 
+resource "google_service_account" "ci" {
+  account_id   = "sa-docpipe-ci"
+  display_name = "DocPipe GitHub Actions (Dataform)"
+}
+
 resource "google_project_iam_member" "ingest" {
   for_each = toset([
     "roles/cloudsql.client",

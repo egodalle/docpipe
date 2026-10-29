@@ -6,8 +6,8 @@ Living document. Newest entry at the top.
 
 | Field | Value |
 | --- | --- |
-| Phase | **D7 / M7 v1.0 shipped.** Post-v1.0: hybrid RRF on `feat/hybrid-retrieval-ops`. |
-| Date | 2026-10-27 |
+| Phase | **D7 / M7 v1.0 shipped.** Post-v1.0: GitHub Actions WIF → Dataform. |
+| Date | 2026-10-29 |
 | Ship | 2026-11-02 (ahead of calendar) |
 | Cost cap | $25 |
 | GCP project | `docpipe-p1` (number `129492415939`) ACTIVE |
@@ -20,6 +20,12 @@ Living document. Newest entry at the top.
 | API | local `:8080` and Cloud Run (SQL stopped ⇒ `/health` 503) |
 | Blocker | None |
 | Next | Leave SQL stopped. Spend stays under $25. |
+
+## 2026-10-29 — GitHub → GCP Dataform
+
+- Merge to `main` runs `npx dataform run` in GitHub Actions as `sa-docpipe-ci` via WIF. PRs compile only.
+- No JSON keys, no GitHub PAT, no hosted Dataform Git remote (SQLX lives under `dataform/`).
+- Cloud SQL stays **STOPPED**.
 
 ## 2026-10-27 — refuse eval + citation integrity (feature branch)
 

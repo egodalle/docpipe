@@ -10,7 +10,7 @@
 | DOC-006 | [RAID log](raid.md) | Engineer | Live |
 | DOC-007 | [Environments and cost](environments.md) | Engineer | Approved — kickoff |
 | DOC-008 | [Status](status.md) | All | Live — kickoff |
-| ADR | [Architecture decision records](adr/README.md) | Engineer | 0001–0004 accepted |
+| ADR | [Architecture decision records](adr/README.md) | Engineer | 0001–0010 accepted |
 | HIST | [v0 project brief](project-brief.md) | Archive | Superseded by charter |
 | HIST | [Role map](role-map.md) | Archive | Frozen Day 1 — still valid |
 

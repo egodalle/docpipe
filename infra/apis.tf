@@ -16,6 +16,8 @@ resource "google_project_service" "required" {
     "dataform.googleapis.com",
     "cloudscheduler.googleapis.com",
     "iam.googleapis.com",
+    "iamcredentials.googleapis.com",
+    "sts.googleapis.com",
     "billingbudgets.googleapis.com",
   ])
 
